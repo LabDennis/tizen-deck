@@ -25,3 +25,6 @@ $('#console-form').onsubmit=async e=>{e.preventDefault();const command=$('#comma
 for(const [id,enabled] of [['updates-off',false],['updates-on',true]])$('#'+id).onclick=async()=>{if(!confirm('Automatische Firmware-Updates '+(enabled?'einschalten':'ausschalten')+'?'))return;try{const r=await job('/api/update',{enabled});toast(r.output);await refresh()}catch(e){toast(e.message,true)}};
 $('#password-form').onsubmit=async e=>{e.preventDefault();try{const r=await api('/api/password',Object.fromEntries(new FormData(e.target)));e.target.reset();toast(r.message)}catch(err){toast(err.message,true)}};
 init().catch(()=>showLogin());
+
+// Keyboard navigation stays inside the category bar.
+$("nav").addEventListener("keydown",e=>{if(!["ArrowLeft","ArrowRight","Home","End"].includes(e.key))return;const buttons=$$("[data-page]"),at=buttons.indexOf(document.activeElement);if(at<0)return;e.preventDefault();const next=e.key==="Home"?0:e.key==="End"?buttons.length-1:Math.max(0,Math.min(buttons.length-1,at+(e.key==="ArrowRight"?1:-1)));buttons[next].focus();buttons[next].click();});
