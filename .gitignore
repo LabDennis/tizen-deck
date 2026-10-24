@@ -1,0 +1,13 @@
+.venv/
+.deps/
+.state/
+.signing/
+__pycache__/
+*.pyc
+*.wgt
+*.img*
+*.pem
+*.key
+*.p12
+*-result.json
+.env
