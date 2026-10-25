@@ -27,6 +27,11 @@ Der Installer lädt Werkzeuge herunter und konfiguriert nur den PC. Er führt ke
 
 [Installation, Entwicklermodus, Netzwerk, Root, Backup und Entfernung](docs/GUIDE.md).
 
+[PC-Fernbedienung und Einschalten aus Standby](docs/PC-REMOTE.md): `python3 pc_remote.py`
+öffnet eine interaktive CLI mit Pfeiltasten, OK und Zurück. Einzelbefehle,
+PNG-Aufnahmen und Wake-on-LAN über die externe Bridge sind ebenfalls verfügbar.
+Das vorhandene Webinterface bleibt als Browser-Fernbedienung nutzbar.
+
 ## Getestet
 
 Samsung LS32BM700UUXEN, T-NKLBWWC-1720.7, Tizen 6.5, ARMv7, .NET 3.1. Keine allgemeine Kompatibilitätszusage für andere Modelle. Web-Login und Live-Messungen sowie temporärer Root-Zugriff wurden an diesem Gerät geprüft. Automatisierte Tests prüfen Zugriffsschutz, CSRF und Auftragsverarbeitung. Fernbedienungs-WebSocket benötigt die Zustimmung am TV. Echte PNG-Bildschirmaufnahmen werden unterstützt; flüssiges Video-Streaming ist nicht implementiert.

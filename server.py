@@ -7,6 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 from tv import TV, HERE, STATE, HOST, APPS
+from wake import WakeOnLan
 
 
 def password_hash(password, salt):
@@ -28,6 +29,7 @@ def init_auth():
 class App:
     def __init__(self):
         self.tv=TV();self.sessions={};self.jobs={};self.lock=threading.Lock();self.failures=[]
+        self.wake=WakeOnLan(STATE)
         self.pool=ThreadPoolExecutor(max_workers=1)
     def login(self,user,password):
         now=time.time()
@@ -87,6 +89,7 @@ class Handler(BaseHTTPRequestHandler):
         _,s=self.session()
         if not s:return self.reply(401,{'error':'Bitte anmelden.'})
         if path=='/api/session':return self.reply(200,{'csrf':s['csrf'],'host':HOST,'apps':APPS,'username':json.loads((STATE/'auth.json').read_text()).get('username','admin')})
+        if path=='/api/wake-config':return self.reply(200,APP.wake.config())
         if path=='/api/screen':
             screen=APP.tv.screen
             if screen is None:return self.reply(404,{'error':'Noch keine Aufnahme vorhanden.'})
@@ -130,7 +133,10 @@ class Handler(BaseHTTPRequestHandler):
             if path=='/api/input':
                 if not any(k in data for k in ('key','text','mouse')):raise ValueError('Eingabe fehlt')
                 return self.reply(200,APP.tv.remote(key=data.get('key'),text=data.get('text'),mouse=data.get('mouse')))
+            if path=='/api/wake-config':
+                return self.reply(200,APP.wake.save(data.get('mac'),data.get('broadcast')))
             if path=='/api/read':fn=lambda:APP.tv.read(data.get('kind'))
+            elif path=='/api/wake':fn=lambda:APP.wake.wake(APP.tv.device)
             elif path=='/api/capture':fn=APP.tv.capture_screen
             elif path=='/api/launch':fn=lambda:APP.tv.launch(data.get('app'))
             elif path=='/api/remote':fn=lambda:APP.tv.remote(key=data.get('key'),text=data.get('text'))

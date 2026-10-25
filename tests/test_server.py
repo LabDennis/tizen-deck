@@ -54,6 +54,29 @@ class Tests(unittest.TestCase):
   self.assertEqual(tv.ws.payload['params']['TypeOfRemote'],'ProcessMouseDevice')
   self.assertEqual(tv.ws.payload['params']['Position']['x'],100)
  def test_wrong_password(self):self.assertEqual(self.request('/api/login',{'username':'admin','password':'wrong'})[0],400)
+ def test_pc_remote_real_http_session(self):
+  from pc_remote import Remote
+  from unittest.mock import patch
+  remote=Remote(f'http://127.0.0.1:{self.port}')
+  remote.login('admin','test-password-123456')
+  with patch.object(server.APP.tv,'remote',return_value={'message':'delivered'}) as send:
+   self.assertEqual(remote.key('up'),{'message':'delivered'})
+   send.assert_called_once_with(key='KEY_UP',text=None,mouse=None)
+  remote.logout()
+  with self.assertRaisesRegex(ValueError,'HTTP 401'):remote.request('/api/session')
+ def test_wake_requires_session_csrf_and_valid_configuration(self):
+  self.assertEqual(self.request('/api/wake-config')[0],401)
+  self.assertEqual(self.request('/api/wake',{})[0],401)
+  cookie,csrf=self.login()
+  self.assertEqual(self.request('/api/wake',{},cookie=cookie)[0],403)
+  self.assertEqual(self.request('/api/wake-config',{'mac':'invalid','broadcast':'bad'},cookie=cookie,csrf=csrf)[0],400)
+  data={'mac':'02:00:00:00:00:01','broadcast':'192.0.2.255'}
+  self.assertEqual(self.request('/api/wake-config',data,cookie=cookie,csrf=csrf)[0],200)
+  self.assertEqual(self.request('/api/wake-config',cookie=cookie)[2],data)
+  old=server.APP.wake.wake;server.APP.wake.wake=lambda device:{'sent':True,'awake':False}
+  try:
+   self.assertEqual(self.request('/api/wake',{},cookie=cookie,csrf=csrf)[0],202)
+  finally:server.APP.pool.submit(lambda:None).result();server.APP.wake.wake=old
  def test_cross_origin_and_dns_rebinding(self):
   self.assertEqual(self.request('/api/login',{'username':'admin','password':'test-password-123456'},origin=False)[0],403)
   self.assertEqual(self.request('/api/session',host='evil.test')[0],403)

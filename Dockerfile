@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends git curl ca-cer
 WORKDIR /app
 COPY install.sh requirements.txt ./
 RUN bash install.sh 127.0.0.1 --root-support && rm -rf .state .deps/root.tar.gz .deps/sdb.zip
-COPY server.py tv.py ./
+COPY server.py tv.py wake.py ./
 COPY static ./static
 RUN useradd --uid 10001 --create-home deck && mkdir -p /app/.state && chown -R deck:deck /app
 USER deck

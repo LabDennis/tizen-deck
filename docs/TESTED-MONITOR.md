@@ -60,3 +60,12 @@ werden. Es wurde keine Custom-Firmware geflasht.
 
 Für einen neuen Gerätebericht bitte Modell, Firmware, Runtime und bereinigte
 Ergebnisse von `id`/Diagnose angeben. Keine Roh-Dumps oder Zugangsdaten hochladen.
+
+## Ergänzung vom 25.10.2026: PC Remote und Standby
+
+Die Python-CLI wurde mit verdeckter Passwortabfrage, interaktiven Pfeiltasten,
+Beenden und PNG-Aufnahme gegen den nativen HTTPS-Dienst geprüft. Die externe
+HTTP-Bridge bestätigt ein bereits eingeschaltetes Gerät, ohne Power-Toggle oder
+Weckpakete zu senden. Ein gesonderter echter Standby-Versuch über den Wake-Modulpfad
+weckte den Monitor nach 80 Sekunden Schlaf; API, nativer Dienst und SDB waren danach
+wieder erreichbar. Details und Grenzen: [PC-REMOTE.md](PC-REMOTE.md).
