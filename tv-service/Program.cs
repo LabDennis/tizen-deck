@@ -26,7 +26,7 @@ class DeckTV {
  if(r.path=="/api/login"&&r.method=="POST"){lock(Gate){long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();if(now-LastLogin>60){Attempts=0;LastLogin=now;}if(++Attempts>6)throw new Exception("Zu viele Versuche; eine Minute warten");if(C.hash==""||!Equal(Text(r.data,"username"),C.username)||!Equal(Hash(Text(r.data,"password"),C.salt),C.hash))throw new Exception("Zugangsdaten falsch");var token=Random();var se=new Session{csrf=Random(),expires=DateTime.UtcNow.AddHours(8)};Sessions[token]=se;Reply(s,200,new{csrf=se.csrf},false,"application/json","Set-Cookie: deck_session="+token+"; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800\r\n");}return;}
  var session=Auth(r);if(session==null){Reply(s,401,new{error="Bitte anmelden"});return;}if(r.method=="POST"&&!Equal(r.Get("X-CSRF-Token"),session.csrf)){Reply(s,403,new{error="Ungültige Sitzung"});return;}
  if(r.path=="/api/session"){Reply(s,200,new{csrf=session.csrf,host=Host,username=C.username,apps=new{},mode="tv"});return;}
- if(r.path=="/api/device"){Reply(s,200,new{device=new{modelName="Samsung Smart Monitor",resolution="1920x1080 Capture",developerMode="1"},time=DateTimeOffset.UtcNow.ToUnixTimeSeconds()});return;}
+ if(r.path=="/api/device"){Reply(s,200,new{device=new{modelName="Samsung Smart Monitor",resolution="1920x1080 Capture",developerMode=(string)null},time=DateTimeOffset.UtcNow.ToUnixTimeSeconds()});return;}
  if(r.path=="/api/screen"){var frame=Screen;if(frame==null){Reply(s,404,new{error="Noch keine Aufnahme"});return;}Reply(s,200,frame,false,"image/png");return;}
  if(r.path.StartsWith("/api/jobs/")){if(Jobs.TryGetValue(r.path.Substring(10),out var job))Reply(s,200,job);else Reply(s,404,new{});return;}
  if(r.method!="POST"){Reply(s,404,new{});return;}
@@ -41,6 +41,14 @@ class DeckTV {
  if(path=="/api/console"){if(!Flag(d,"confirm_root")||Text(d,"mode")!="root")throw new Exception("Auf dem TV erfordert die Konsole den bestätigten Root-Modus");string command=Text(d,"command");if(command.Length==0||command.Length>4000||command.Contains('\0'))throw new Exception("Ungültiger Befehl");return Run(command);}
  if(path=="/api/update")return Run("vconftool set -f -t int db/menu/support/softwareupdate/autoupdate "+(Flag(d,"enabled")?"1":"0"));
  if(path=="/api/launch"){var apps=new Dictionary<string,string>{{"plex","kIciSQlYEM.plex"},{"moonlight","MoonLightS.MoonlightWasm"},{"youtube","9Ur5IzDKqV.TizenYouTube"},{"browser","org.tizen.browser"}};if(!apps.ContainsKey(Text(d,"app")))throw new Exception("Unbekannte App");return Run("app_launcher -s "+apps[Text(d,"app")]);}
+ if(path=="/api/read"&&Text(d,"kind")=="metrics")return ReadMetrics();
  var commands=new Dictionary<string,string>{{"metrics","cat /proc/uptime; cat /proc/loadavg; cat /proc/meminfo | head -5"},{"processes","ps -eo pid,ppid,user,stat,comm,args | head -160"},{"services","systemctl list-units --type=service --all --no-pager --no-legend"},{"packages","pkgcmd -l -t tpk; pkgcmd -l -t wgt"},{"logs","journalctl -n 100 --no-pager -o short-iso"},{"network","cat /proc/net/dev"},{"capabilities","id; uname -r; cat /proc/self/attr/current"}};var kind=Text(d,"kind");if(!commands.ContainsKey(kind))throw new Exception("Unbekannte Diagnose");return Run(commands[kind]);}
+ static object ReadMetrics(){
+ var values=new Dictionary<string,long>();foreach(var line in File.ReadAllLines("/proc/meminfo")){var parts=line.Split(new[]{' ',':','\t'},StringSplitOptions.RemoveEmptyEntries);if(parts.Length>1&&long.TryParse(parts[1],out var value))values[parts[0]]=value;}
+ long total=values.ContainsKey("MemTotal")?values["MemTotal"]:0,free=values.ContainsKey("MemAvailable")?values["MemAvailable"]:values.ContainsKey("MemFree")?values["MemFree"]:0;
+ long? diskTotal=null,diskUsed=null;try{var drive=new DriveInfo("/opt");diskTotal=drive.TotalSize/1024;diskUsed=(drive.TotalSize-drive.AvailableFreeSpace)/1024;}catch{}
+ var uptime=File.ReadAllText("/proc/uptime").Split(' ')[0];var fields=File.ReadAllText("/proc/loadavg").Split(' ');var loads=new[]{fields[0],fields[1],fields[2]};
+ return new{output="Live /proc metrics",exit_code=0,metrics=new{uptime,load=loads,memory_total_kb=total,memory_used_kb=Math.Max(0,total-free),disk_total_kb=diskTotal,disk_used_kb=diskUsed,auto_update=(bool?)null,identity="Native TV service",raw="/proc + /opt filesystem"}};
+ }
  static object Input(JsonElement d){return NativeInput.Send(d);}
 }
