@@ -19,3 +19,7 @@ footer{color:var(--muted)}footer b{background:#bce7ff16}#toast{background:#102d4
 @media(prefers-reduced-motion:reduce){body:before,body:after{animation:none}*{transition:none!important}}
 
 .stand,.foot{background:#a7c5d5}
+
+#tv-screen{display:block;width:100%;height:auto;margin-top:16px;border:1px solid #86b8d366}#tv-screen[hidden]{display:none}
+
+.remote-layout{grid-template-columns:minmax(0,3fr) minmax(260px,1fr)}.screen-panel{grid-row:span 2}#screen-input{outline:2px solid transparent;min-height:60px}#screen-input.input-active{outline-color:#a8e9ff;box-shadow:0 0 18px #89cfff40}#screen-input img{cursor:crosshair;user-select:none}#input-status{color:#9dddf6;font-size:13px}@media(max-width:850px){.remote-layout{grid-template-columns:1fr}.screen-panel{grid-row:auto}}

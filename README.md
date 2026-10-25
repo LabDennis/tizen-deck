@@ -36,3 +36,11 @@ Tests: `.venv/bin/python -m unittest discover -s tests -v`.
 ## Abhängigkeiten
 
 Root-/SDK-Brücke: [samsung-tv-root](https://github.com/chris-ritsen/samsung-tv-root), Commit `3b97edf3762db7670585d73e29623dc56195bf98`, Unlicense. SDB und Root-Release werden heruntergeladen und per SHA-256 geprüft. Sie sind nicht Teil dieses Repositorys. Private Zustände, Tokens, Dumps und Autorenschlüssel gehören niemals ins Repository.
+
+## Monitor view and scoped input
+
+The Remote page displays real compositor PNG captures. Capture requires temporary root; no persistent daemon is installed. Auto refresh waits 15 seconds after each capture and stops when leaving the tab/page or on an error. Only the latest PNG is retained in memory, behind the existing session authentication; responses are not cached. Video, protected content and HDMI planes are not yet verified. This is not a smooth video stream.
+
+Keyboard and experimental pointer forwarding are limited to hovering over the image. Leaving the image/window clears pending input. Arrow keys, Enter, Escape, Backspace and Tab use remote keys; text requires a supported TV input field. Click means remote OK, right click means Back, wheel means navigation. Pointer coordinates use the captured image dimensions; Samsung firmware support is model dependent. No arbitrary command execution is exposed by the input endpoint.
+
+Protocol reference: https://github.com/xchwarze/samsung-tv-ws-api/blob/master/samsungtvws/remote.py (`ProcessMouseDevice`).

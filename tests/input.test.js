@@ -1,0 +1,18 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const handlers={},globalHandlers={},docHandlers={},sent=[];
+const area={classList:{add(){},remove(){}},focus(){document.activeElement=area;}};
+const image={hidden:false,naturalWidth:1920,naturalHeight:1080,addEventListener(k,f){handlers[k]=f;},getBoundingClientRect(){return {left:0,top:0,width:960,height:540};}};
+const status={},shell={hidden:false};
+const document={hidden:false,activeElement:null,querySelector(s){return {'#screen-input':area,'#tv-screen':image,'#input-status':status,'#shell':shell}[s];},addEventListener(k,f){docHandlers[k]=f;}};
+const context={document,window:{addEventListener(k,f){globalHandlers[k]=f;}},location:{hash:'#remote'},Date,api:async(path,data)=>{sent.push({path,data});}};
+vm.runInNewContext(fs.readFileSync(__dirname+'/../static/input.js','utf8'),context);
+(async()=>{
+ let prevented=false;const key={key:'ArrowDown',preventDefault(){prevented=true;}};
+ docHandlers.keydown(key);assert.equal(sent.length,0);assert.equal(prevented,false);
+ handlers.mouseenter();docHandlers.keydown(key);await new Promise(setImmediate);assert.equal(sent[0].data.key,'KEY_DOWN');assert.equal(prevented,true);
+ handlers.mouseleave();docHandlers.keydown(key);assert.equal(sent.length,1);
+ handlers.mouseenter();handlers.mousemove({clientX:480,clientY:270});await new Promise(setImmediate);assert.equal(sent[1].data.mouse.x,960);assert.equal(sent[1].data.mouse.y,540);
+ globalHandlers.blur();handlers.click({preventDefault(){}});assert.equal(sent.length,2);
+ handlers.mouseenter();document.activeElement={tagName:'INPUT'};docHandlers.keydown({key:'a',preventDefault(){throw Error('Must not capture form input');}});assert.equal(sent.length,2);
+ console.log('Input hover, leave, blur, focus and coordinate mapping passed');
+})();

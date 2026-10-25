@@ -2,7 +2,7 @@ import sys, threading, unittest, json, urllib.request, urllib.error, tempfile
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import server
-from tv import metrics
+from tv import metrics, TV
 class Tests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
@@ -27,9 +27,32 @@ class Tests(unittest.TestCase):
   status,h,b=self.request('/api/login',{'username':'admin','password':'test-password-123456'})
   self.assertEqual(status,200);return h['Set-Cookie'].split(';')[0],b['csrf']
  def test_auth_required(self):
-  for path in ['/api/session','/api/device','/api/jobs/anything']:
+  for path in ['/api/session','/api/device','/api/jobs/anything','/api/screen']:
    self.assertEqual(self.request(path)[0],401)
   self.assertEqual(self.request('/api/console',{'command':'id','mode':'root'})[0],401)
+ def test_capture_requires_csrf_and_image_requires_session(self):
+  cookie,csrf=self.login()
+  self.assertEqual(self.request('/api/capture',{},cookie=cookie)[0],403)
+  old=server.APP.tv.screen
+  try:
+   server.APP.tv.screen=(b'\x89PNG\r\n\x1a\n',123)
+   status,headers,body=self.request('/api/screen',cookie=cookie)
+   self.assertEqual(status,200);self.assertEqual(headers.get_content_type(),'image/png')
+   self.assertEqual(headers['Cache-Control'],'no-store');self.assertEqual(body,server.APP.tv.screen[0])
+   self.assertEqual(self.request('/api/screen')[0],401)
+  finally:server.APP.tv.screen=old
+ def test_input_scope_and_validation(self):
+  cookie,csrf=self.login()
+  self.assertEqual(self.request('/api/input',{'key':'KEY_UP'},cookie=cookie)[0],403)
+  for mouse in ({'x':-1,'y':0},{'x':True,'y':1},{'x':1},{'x':'1','y':1}):
+   with self.assertRaises(ValueError):TV().remote(mouse=mouse)
+  with self.assertRaises(ValueError):TV().remote(key='KEY_UP',text='x')
+  class Socket:
+   def send(self,payload):self.payload=json.loads(payload)
+  tv=TV();tv.ws=Socket();tv.connect_remote=lambda:None
+  tv.remote(mouse={'x':100,'y':200})
+  self.assertEqual(tv.ws.payload['params']['TypeOfRemote'],'ProcessMouseDevice')
+  self.assertEqual(tv.ws.payload['params']['Position']['x'],100)
  def test_wrong_password(self):self.assertEqual(self.request('/api/login',{'username':'admin','password':'wrong'})[0],400)
  def test_cross_origin_and_dns_rebinding(self):
   self.assertEqual(self.request('/api/login',{'username':'admin','password':'test-password-123456'},origin=False)[0],403)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Password protected local TV management UI; binds loopback only."""
-import argparse, hashlib, hmac, json, secrets, threading, time, traceback
+import argparse, re, hashlib, hmac, json, secrets, threading, time, traceback
 from concurrent.futures import ThreadPoolExecutor
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -12,10 +12,13 @@ from tv import TV, HERE, STATE, HOST, APPS
 def password_hash(password, salt):
     return hashlib.scrypt(password.encode(),salt=bytes.fromhex(salt),n=16384,r=8,p=1).hex()
 
-def save_password(password):
+def save_password(password, username=None):
+    if username is None:
+        username=json.loads((STATE/"auth.json").read_text()).get("username","admin") if (STATE/"auth.json").exists() else "admin"
+    if not isinstance(username,str) or not re.fullmatch(r"[A-Za-z0-9_.-]{3,40}",username):raise ValueError("Benutzername: 3–40 Buchstaben, Zahlen, Punkt, Bindestrich oder Unterstrich.")
     if len(password)<12: raise ValueError('Mindestens 12 Zeichen verwenden.')
     salt=secrets.token_hex(16)
-    p=STATE/'auth.json'; p.write_text(json.dumps({'salt':salt,'hash':password_hash(password,salt)}));p.chmod(0o600)
+    p=STATE/'auth.json'; p.write_text(json.dumps({'username':username,'salt':salt,'hash':password_hash(password,salt)}));p.chmod(0o600)
 
 def init_auth():
     if not (STATE/'auth.json').exists():
@@ -32,7 +35,7 @@ class App:
             self.failures=[t for t in self.failures if now-t<60]
             if len(self.failures)>=6: raise ValueError('Zu viele Versuche. Bitte eine Minute warten.')
             auth=json.loads((STATE/'auth.json').read_text())
-            valid=hmac.compare_digest(password_hash(password,auth['salt']),auth['hash']) and user=='admin'
+            valid=hmac.compare_digest(password_hash(password,auth['salt']),auth['hash']) and hmac.compare_digest(user,auth.get('username','admin'))
             if not valid: self.failures.append(now);raise ValueError('Benutzername oder Passwort falsch.')
             self.sessions={k:v for k,v in self.sessions.items() if v['expires']>now}
             token=secrets.token_urlsafe(32);session={'csrf':secrets.token_urlsafe(24),'expires':now+8*3600}
@@ -77,13 +80,17 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if not self.host_ok():return self.reply(403,{'error':'Ungültiger Host'})
         path=urlparse(self.path).path
-        if path in ('/','/app.js','/style.css'):
-            name={'/':'index.html','/app.js':'app.js','/style.css':'style.css'}[path]
-            data=(HERE/'static'/name).read_bytes();kind={'/':'text/html','/app.js':'text/javascript','/style.css':'text/css'}[path]
+        if path in ('/','/app.js','/input.js','/style.css'):
+            name={'/':'index.html','/app.js':'app.js','/input.js':'input.js','/style.css':'style.css'}[path]
+            data=(HERE/'static'/name).read_bytes();kind={'/':'text/html','/app.js':'text/javascript','/input.js':'text/javascript','/style.css':'text/css'}[path]
             return self.reply(200,data,{'Content-Type':kind+'; charset=utf-8','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; form-action 'self'"})
         _,s=self.session()
         if not s:return self.reply(401,{'error':'Bitte anmelden.'})
-        if path=='/api/session':return self.reply(200,{'csrf':s['csrf'],'host':HOST,'apps':APPS})
+        if path=='/api/session':return self.reply(200,{'csrf':s['csrf'],'host':HOST,'apps':APPS,'username':json.loads((STATE/'auth.json').read_text()).get('username','admin')})
+        if path=='/api/screen':
+            screen=APP.tv.screen
+            if screen is None:return self.reply(404,{'error':'Noch keine Aufnahme vorhanden.'})
+            return self.reply(200,screen[0],{'Content-Type':'image/png'})
         if path=='/api/device':
             try:return self.reply(200,{'device':APP.tv.device(),'time':time.time()})
             except Exception as e:return self.reply(503,{'error':str(e)})
@@ -118,9 +125,13 @@ class Handler(BaseHTTPRequestHandler):
                 old=data.get('current','');new=data.get('password','')
                 auth=json.loads((STATE/'auth.json').read_text())
                 if not hmac.compare_digest(password_hash(old,auth['salt']),auth['hash']):raise ValueError('Aktuelles Passwort falsch')
-                save_password(new);APP.sessions={token:s};(STATE/'initial-login.txt').unlink(missing_ok=True)
-                return self.reply(200,{'message':'Passwort geändert; andere Sitzungen beendet.'})
+                save_password(new,data.get('username'));APP.sessions={token:s};(STATE/'initial-login.txt').unlink(missing_ok=True)
+                return self.reply(200,{'message':'Zugang geändert; andere Sitzungen beendet.'})
+            if path=='/api/input':
+                if not any(k in data for k in ('key','text','mouse')):raise ValueError('Eingabe fehlt')
+                return self.reply(200,APP.tv.remote(key=data.get('key'),text=data.get('text'),mouse=data.get('mouse')))
             if path=='/api/read':fn=lambda:APP.tv.read(data.get('kind'))
+            elif path=='/api/capture':fn=APP.tv.capture_screen
             elif path=='/api/launch':fn=lambda:APP.tv.launch(data.get('app'))
             elif path=='/api/remote':fn=lambda:APP.tv.remote(key=data.get('key'),text=data.get('text'))
             elif path=='/api/update':fn=lambda:APP.tv.update(data.get('enabled'))

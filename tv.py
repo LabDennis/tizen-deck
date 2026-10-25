@@ -17,7 +17,7 @@ SDB = WORK / 'tizen-sdb/data/tools/sdb'
 os.environ['SDB'] = str(SDB)
 STATE = HERE / '.state'
 STATE.mkdir(mode=0o700, exist_ok=True)
-KEYS = {'KEY_UP','KEY_DOWN','KEY_LEFT','KEY_RIGHT','KEY_ENTER','KEY_RETURN','KEY_HOME','KEY_MENU','KEY_SOURCE','KEY_VOLUP','KEY_VOLDOWN','KEY_MUTE','KEY_PLAY','KEY_PAUSE','KEY_STOP','KEY_HDMI','KEY_POWER'}
+KEYS = {'KEY_UP','KEY_DOWN','KEY_LEFT','KEY_RIGHT','KEY_ENTER','KEY_RETURN','KEY_HOME','KEY_MENU','KEY_SOURCE','KEY_VOLUP','KEY_VOLDOWN','KEY_MUTE','KEY_PLAY','KEY_PAUSE','KEY_STOP','KEY_HDMI','KEY_POWER','KEY_BACKSPACE','KEY_TAB'}
 APPS = {
  'plex': ('Plex', 'kIciSQlYEM.plex'),
  'moonlight': ('Moonlight', 'MoonLightS.MoonlightWasm'),
@@ -67,7 +67,7 @@ class Agent(RootAgentServer):
 
 class TV:
     def __init__(self):
-        self.lock=threading.Lock(); self.remote_lock=threading.Lock(); self.ws=None
+        self.lock=threading.Lock(); self.remote_lock=threading.Lock(); self.ws=None; self.screen=None
     def device(self):
         with build_opener(ProxyHandler({})).open(f'http://{HOST}:8001/api/v2/',timeout=4) as r:
             d=json.load(r).get('device',{})
@@ -90,6 +90,26 @@ class TV:
         return {'output':cmd['stdout']+cmd['stderr'],'exit_code':cmd['exit_code'],'timed_out':cmd['timed_out'],
                 'mode':'root','uid':result['uid'],'smack':result['smack'],'cleaned':result['staging_cleaned'],
                 'system_files_unchanged':result['system_files_unchanged'],'time':time.time()}
+    def capture_screen(self):
+        # A unique temporary capture; no persistent root or public TV file server.
+        import secrets
+        path='/tmp/deck-screen-'+secrets.token_hex(8)+'.png'
+        command=("umask 077; trap 'rm -f "+path+"' EXIT; "
+                 "enlightenment_info -dump_screen -p /tmp/ -n "+path.rsplit('/',1)[1]+
+                 " >/dev/null 2>&1; test -s "+path+" || exit 1; "
+                 "test $(wc -c < "+path+") -le 8388608 || exit 2; base64 "+path)
+        result=self.root(command)
+        if result['exit_code'] or result['timed_out']:
+            raise RuntimeError('Bildschirmaufnahme fehlgeschlagen; bisheriges Bild ist unverändert.')
+        try:
+            frame=base64.b64decode(''.join(result['output'].split()),validate=True)
+        except ValueError as error:
+            raise RuntimeError('Ungültige Bildschirmdaten') from error
+        if not frame.startswith(b'\x89PNG\r\n\x1a\n') or len(frame)>8388608:
+            raise RuntimeError('Ungültiges PNG vom Monitor')
+        captured=time.time()
+        self.screen=(frame,captured)
+        return {'captured_at':captured,'message':'Bildschirmaufnahme aktualisiert.'}
     def launch(self, name):
         if name not in APPS: raise ValueError('Unbekannte App')
         return self.sdk('app_launcher -s '+shlex.quote(APPS[name][1]))
@@ -121,12 +141,16 @@ class TV:
             raise RuntimeError('Fernbedienung nicht bestätigt. Bitte am Monitor erlauben.')
         except Exception:
             ws.close(); raise
-    def remote(self,key=None,text=None):
+    def remote(self,key=None,text=None,mouse=None):
+        if sum(x is not None for x in (key,text,mouse))>1: raise ValueError("Nur eine Eingabe pro Anfrage")
+        if mouse is not None:
+            if not isinstance(mouse,dict) or set(mouse)!={"x","y"} or any(type(mouse[k]) is not int or not 0<=mouse[k]<=8192 for k in mouse): raise ValueError("Ungültige Mausposition")
         if key is not None and key not in KEYS: raise ValueError('Unbekannte Taste')
         if text is not None and (not isinstance(text,str) or not 1<=len(text)<=500): raise ValueError('Text: 1–500 Zeichen')
         with self.remote_lock:
             self.connect_remote()
             if key: params={'Cmd':'Click','DataOfCmd':key,'Option':'false','TypeOfRemote':'SendRemoteKey'}
+            elif mouse is not None: params={'Cmd':'Move','Position':{'x':mouse['x'],'y':mouse['y'],'Time':'0'},'TypeOfRemote':'ProcessMouseDevice'}
             elif text: params={'Cmd':base64.b64encode(text.encode()).decode(),'DataOfCmd':'base64','TypeOfRemote':'SendInputString'}
             else: return {'message':'Fernbedienung gekoppelt.'}
             try: self.ws.send(json.dumps({'method':'ms.remote.control','params':params}))
