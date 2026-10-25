@@ -1,0 +1,8 @@
+*
+!Dockerfile
+!install.sh
+!requirements.txt
+!server.py
+!tv.py
+!static/
+!static/**

@@ -1,0 +1,15 @@
+services:
+  deck:
+    build: .
+    image: tizen-deck:local
+    # Linux host networking is needed for the TV callback ports 1763/1764.
+    network_mode: host
+    environment:
+      TIZEN_HOST: ${TIZEN_HOST:?Set the monitor IPv4 address in .env}
+    volumes:
+      - deck-state:/app/.state
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+volumes:
+  deck-state:

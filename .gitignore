@@ -11,3 +11,10 @@ __pycache__/
 *.p12
 *-result.json
 .env
+
+tv-service/bin/
+tv-service/obj/
+tv-service/dist/
+
+tests/native-updates/bin/
+tests/native-updates/obj/

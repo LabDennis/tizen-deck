@@ -1,4 +1,5 @@
 """Local bridge to an owner-authorized Samsung monitor. No boot persistence."""
+import contextlib, fcntl
 import asyncio, base64, json, os, re, shlex, ssl, sys, threading, time
 from pathlib import Path
 from urllib.request import build_opener, ProxyHandler
@@ -65,6 +66,16 @@ class Client(SdbClient):
 class Agent(RootAgentServer):
     def __init__(self, host, port, *a, **kw): super().__init__(host,1763,*a,**kw)
 
+@contextlib.contextmanager
+def bridge_lock():
+    path='/tmp/tizen-deck-'+str(os.getuid())+'-'+HOST+'.lock'
+    fd=os.open(path,os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW,0o600)
+    try:
+        fcntl.flock(fd,fcntl.LOCK_EX)
+        yield
+    finally:
+        fcntl.flock(fd,fcntl.LOCK_UN);os.close(fd)
+
 class TV:
     def __init__(self):
         self.lock=threading.Lock(); self.remote_lock=threading.Lock(); self.ws=None; self.screen=None
@@ -73,14 +84,14 @@ class TV:
             d=json.load(r).get('device',{})
         return {k:d.get(k) for k in ('name','modelName','PowerState','developerMode','developerIP','resolution')}
     def sdk(self, command):
-        with self.lock:
+        with self.lock, bridge_lock():
             c=Client(SDB,HOST,timeout=10); c.connect(); c.require_device()
             result=c.capture(command,timeout=25).output
         m=re.search(r'\n\[exit:(\d+)\]\s*$',result)
         if not m: raise RuntimeError('Keine vollständige Antwort vom Monitor erhalten.')
         return {'output':result[:m.start()], 'exit_code':int(m[1]), 'mode':'sdk', 'time':time.time()}
     def root(self, command):
-        with self.lock:
+        with self.lock, bridge_lock():
             archive_root.SdbClient=Client; archive_root.RootAgentServer=Agent
             callback=route_callback_host(HOST)
             result=asyncio.run(archive_root.probe(HOST,model='LS32BM700UUXEN',callback_host=callback,bind_host=callback,

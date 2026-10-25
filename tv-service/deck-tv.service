@@ -1,0 +1,12 @@
+[Unit]
+Description=Tizen Deck local controller and optional HTTPS interface
+After=network.target
+[Service]
+Type=simple
+UMask=0077
+WorkingDirectory=/opt/usr/tizen-deck
+ExecStart=/usr/bin/dotnet /opt/usr/tizen-deck/DeckTV.dll
+Restart=on-failure
+RestartSec=5
+[Install]
+WantedBy=multi-user.target

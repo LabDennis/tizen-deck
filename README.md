@@ -44,3 +44,15 @@ The Remote page displays real compositor PNG captures. Capture requires temporar
 Keyboard and experimental pointer forwarding are limited to hovering over the image. Leaving the image/window clears pending input. Arrow keys, Enter, Escape, Backspace and Tab use remote keys; text requires a supported TV input field. Click means remote OK, right click means Back, wheel means navigation. Pointer coordinates use the captured image dimensions; Samsung firmware support is model dependent. No arbitrary command execution is exposed by the input endpoint.
 
 Protocol reference: https://github.com/xchwarze/samsung-tv-ws-api/blob/master/samsungtvws/remote.py (`ProcessMouseDevice`).
+
+## Deployment packages
+
+- **External Linux Docker backend:** `./docker-install.sh TV_IPV4`; uses host
+  networking for the TV callbacks and binds the dashboard to localhost. Access
+  remotely with an SSH tunnel. Credentials persist in a named volume.
+- **Native TV backend:** build/install and limitations are described in
+  [TV-SERVICE.md](docs/TV-SERVICE.md). Includes signed local launcher updates.
+
+The native backend's runtime unit does not survive a cold boot. Installing it is
+an explicit addition of a root service; the temporary-root external backend's
+cleanup guarantees do not apply to that separate running service.
