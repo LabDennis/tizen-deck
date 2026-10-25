@@ -1,6 +1,6 @@
 # Tizen Deck
 
-Lokale, passwortgeschützte Webverwaltung für Samsung-Tizen-Monitore: Status, Prozesse, Dienste, Pakete, Netzwerk, Fernbedienung und Konsole. Root-Befehle sind ausdrücklich wählbar und verwenden eine temporäre Sitzung.
+Lokale, passwortgeschützte Webverwaltung für Samsung-Tizen-Monitore: Status, Prozesse, Dienste, Pakete, Netzwerk, Fernbedienung und Konsole. Die externe Bridge verwendet ausdrücklich gewählte temporäre Root-Sitzungen; optional kann ein eigener Dienst direkt auf dem Monitor laufen.
 
 ## Installation (Linux x86_64)
 
@@ -29,7 +29,7 @@ Der Installer lädt Werkzeuge herunter und konfiguriert nur den PC. Er führt ke
 
 ## Getestet
 
-Samsung LS32BM700UUXEN, T-NKLBWWC-1720.7, Tizen 6.5, ARMv7, .NET 3.1. Keine allgemeine Kompatibilitätszusage für andere Modelle. Web-Login und Live-Messungen sowie temporärer Root-Zugriff wurden an diesem Gerät geprüft. Automatisierte Tests prüfen Zugriffsschutz, CSRF und Auftragsverarbeitung. Fernbedienungs-WebSocket benötigt die Zustimmung am TV; Bildschirm-Livebild wird nicht unterstützt.
+Samsung LS32BM700UUXEN, T-NKLBWWC-1720.7, Tizen 6.5, ARMv7, .NET 3.1. Keine allgemeine Kompatibilitätszusage für andere Modelle. Web-Login und Live-Messungen sowie temporärer Root-Zugriff wurden an diesem Gerät geprüft. Automatisierte Tests prüfen Zugriffsschutz, CSRF und Auftragsverarbeitung. Fernbedienungs-WebSocket benötigt die Zustimmung am TV. Echte PNG-Bildschirmaufnahmen werden unterstützt; flüssiges Video-Streaming ist nicht implementiert.
 
 Tests: `.venv/bin/python -m unittest discover -s tests -v`.
 
@@ -56,3 +56,13 @@ Protocol reference: https://github.com/xchwarze/samsung-tv-ws-api/blob/master/sa
 The native backend's runtime unit does not survive a cold boot. Installing it is
 an explicit addition of a root service; the temporary-root external backend's
 cleanup guarantees do not apply to that separate running service.
+
+## Gerät, Root-Anleitung und Entstehung
+
+- [Genauer Monitor, Firmware und tatsächlich geprüfte Funktionen](docs/TESTED-MONITOR.md)
+- [Schritt für Schritt: Entwicklermodus, Root-Test und Installation](docs/ROOT-LS32BM700UUXEN.md)
+- [Entwickelt mit Codex: Eigenanteile und Drittprojekte](docs/PROVENANCE.md)
+
+Entwickelt von LabDennis mit OpenAI Codex am eigenen Samsung M7. Der zugrunde
+liegende Root-Exploit stammt aus samsung-tv-root; ein Firmware-Rebuild oder
+Bootloader-Unlock wird nicht als fertige Funktion angeboten.

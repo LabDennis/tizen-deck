@@ -18,7 +18,7 @@ Python 3.12 oder neuer, Git und curl bereitstellen. `bash install.sh TV_IP` läd
 
 ## 5. Authentifizierung
 
-Das erste Passwort wird zufällig erzeugt und lokal mit Dateirechten 0600 ausgegeben. Im Webinterface ändern; alternativ bei gestopptem Dienst `bash start.sh --set-password`. Serverseitig wird scrypt verwendet. Sitzungen laufen nach acht Stunden ab. Die UI prüft Origin, Host und CSRF. Nicht über einen offenen Reverse Proxy veröffentlichen. Auf Handy-/LAN-Zugriff ist diese Version noch nicht ausgelegt.
+Das erste Passwort wird zufällig erzeugt und lokal mit Dateirechten 0600 ausgegeben. Im Webinterface ändern; alternativ bei gestopptem Dienst `bash start.sh --set-password`. Serverseitig wird scrypt verwendet. Sitzungen laufen nach acht Stunden ab. Die UI prüft Origin, Host und CSRF. Nicht über einen offenen Reverse Proxy veröffentlichen. Diese externe Bridge bindet nur an Loopback. Der optionale native TV-Dienst hat einen getrennten HTTPS-LAN-Zugang; siehe TV-SERVICE.md.
 
 ## 6. Diagnose und Root
 
@@ -53,3 +53,5 @@ Launcher entfernen (bewusste Deinstallation): `pkgcmd -u -n TizenDeckX`. Webserv
 - https://developer.samsung.com/smarttv/develop/getting-started/using-sdk/tv-device.html
 - https://developer.samsung.com/smarttv/develop/api-references/tizen-web-device-api-references/application-api.html
 - https://github.com/chris-ritsen/samsung-tv-root
+
+Modellspezifische Root-Schritte: [ROOT-LS32BM700UUXEN.md](ROOT-LS32BM700UUXEN.md). Entwicklungsanteile: [PROVENANCE.md](PROVENANCE.md).
