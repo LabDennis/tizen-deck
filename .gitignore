@@ -23,3 +23,6 @@ tests/native-apps/obj/
 
 tests/native-guard/bin/
 tests/native-guard/obj/
+
+tests/native-backend/bin/
+tests/native-backend/obj/

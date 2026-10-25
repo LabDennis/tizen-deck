@@ -2,6 +2,7 @@
 Only a runtime systemd unit is created: no firmware remount or hidden boot hook.
 """
 import sys, os, json, secrets, tarfile, subprocess, shutil, shlex, hashlib
+import xml.etree.ElementTree as ET
 from pathlib import Path
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(HERE.parent))
@@ -27,6 +28,7 @@ subprocess.run([str(SDB),'-s',HOST+':26101','push',str(archive),remote],check=Tr
 suffix=secrets.token_hex(6)
 next_dir='/opt/usr/tizen-deck.next-'+suffix
 backup='/opt/usr/tizen-deck.previous-'+suffix
+version=ET.parse(HERE/"DeckTV.csproj").findtext(".//Version")
 command=f"""set -e
 umask 077
 test "$(sha256sum {remote} | cut -d ' ' -f1)" = "{hashlib.sha256(archive.read_bytes()).hexdigest()}"
@@ -48,7 +50,7 @@ healthy=0
 if systemctl start deck-tv.service; then
  for attempt in 1 2 3 4 5 6; do
   sleep 1
-  if /usr/bin/dotnet /opt/usr/tizen-deck/DeckTV.dll --health-check; then healthy=1; break; fi
+  if curl --fail --silent --show-error --max-time 3 -H "X-Deck-Control: $(cat /opt/usr/tizen-deck/state/control-token)" http://127.0.0.1:8844/health > /opt/usr/tizen-deck/state/install-health.json && grep -Fq '"ready":true' /opt/usr/tizen-deck/state/install-health.json && grep -Fq '"version":"{version}"' /opt/usr/tizen-deck/state/install-health.json; then healthy=1; break; fi
  done
 fi
 if [ "$healthy" = 1 ] && systemctl is-active --quiet deck-tv.service; then

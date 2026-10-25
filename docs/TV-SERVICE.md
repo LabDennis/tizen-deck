@@ -59,11 +59,12 @@ also fails, both errors are reported; it never claims recovery without readback.
 Package-version verification is **not** a launcher render/health test.
 
 On the M7, 1.7.0 → 1.6.0 → 1.7.0 rollback was tested on hardware. The current
-1.7.2 installation retains 1.7.1 as its immediate rollback.
+1.8.3 launcher installation retains 1.8.2 as its immediate rollback.
 
-Backend updates still use `install_tv.py`. Signed backend installation through
-the TV menu and an online release feed are not implemented. Samsung firmware
-updates are independent from this updater.
+Signed backend updates, automatic startup-failure rollback and a configurable
+HTTPS feed are available in 1.8.2. See [BACKEND-UPDATES.md](BACKEND-UPDATES.md)
+for packaging, private staging, device tests and limits. No live feed address is
+configured yet. Samsung firmware updates are independent from this updater.
 
 ## Launcher crash handling
 

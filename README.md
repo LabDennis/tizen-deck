@@ -39,8 +39,9 @@ optional, separat eingerichtet und auf dem M7 geprüft.
 Launcher ab 1.6.0, mit laufendem nativen TV-Dienst.
 
 [Aktueller Systemausbau](docs/TV-SERVICE.md): native Audiobedienung, Netzstatus,
-rückgängig machbare Datenschutz-Sperren, signierte Launcher-Updates mit Rückfall
-und begrenzte Absturzbehandlung. [Stand der Boot-Untersuchung](docs/BOOT-RESEARCH.md).
+rückgängig machbare Datenschutz-Sperren, signierte Launcher- und Backend-Updates mit Rückfall
+und begrenzte Absturzbehandlung. [Geprüfte Grenzen der Geräteeinstellungen](docs/DEVICE-SETTINGS-STATUS.md).
+[Stand der Boot-Untersuchung](docs/BOOT-RESEARCH.md).
 
 ## Getestet
 
@@ -66,7 +67,8 @@ Protocol reference: https://github.com/xchwarze/samsung-tv-ws-api/blob/master/sa
   networking for the TV callbacks and binds the dashboard to localhost. Access
   remotely with an SSH tunnel. Credentials persist in a named volume.
 - **Native TV backend:** build/install and limitations are described in
-  [TV-SERVICE.md](docs/TV-SERVICE.md). Includes signed local launcher updates.
+  [TV-SERVICE.md](docs/TV-SERVICE.md). Includes signed launcher/backend updates and rollback; see
+  [BACKEND-UPDATES.md](docs/BACKEND-UPDATES.md).
 
 The native backend's runtime unit does not survive a cold boot. Installing it is
 an explicit addition of a root service; the temporary-root external backend's

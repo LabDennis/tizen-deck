@@ -90,3 +90,18 @@ wieder erreichbar. Details und Grenzen: [PC-REMOTE.md](PC-REMOTE.md).
   Sekunden Erholung etwa 74,4 / 80,2 / 73,4 MiB. Das ist kein FPS-Benchmark.
 - Die begrenzte Gaming-Hub-DLL-Probe lief als UID 5001, nicht als Root. Original
   wiederhergestellt und SHA-256 geprüft. [Boot-Untersuchung](BOOT-RESEARCH.md).
+
+## Backend-Updates 1.8.2
+
+- Getrennte signierte Updates für Launcher und TV-Dienst im TV-Menü.
+- Übertragung über den bereits angemeldeten HTTPS-Dienst; privater Zustand und
+  eingeschriebener Signaturschlüssel bleiben erhalten.
+- Ein absichtlich nicht startender Deck-Dienst wurde am Gerät erkannt und durch
+  den gesicherten Vorgänger ersetzt. Der erste Fehlertest deckte einen falschen
+  Erfolgsstatus des Samsung-.NET-Aufrufs auf; die korrigierte Implementierung
+  prüft deshalb die tatsächliche HTTP-Antwort und Versionsnummer.
+- Reguläres Backend-Update 1.8.1 → 1.8.2 und Launcher 1.7.2 → 1.8.2 installiert.
+- Konfigurierbarer HTTPS-Release-Ordner vorhanden; noch keine reale Feed-Adresse
+  eingerichtet. Weitere Details und Grenzen: [BACKEND-UPDATES.md](BACKEND-UPDATES.md).
+- Die neue Boot-/Root-Forschung bleibt pausiert. Kein neues Boot-Verfahren
+  eingerichtet und keine Firmware geflasht.
