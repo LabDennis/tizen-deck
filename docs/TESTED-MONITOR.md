@@ -38,9 +38,13 @@ und gehören nicht in Kompatibilitätsberichte.
   sind implementiert und mit simulierter Filesystem-API getestet; der echte
   USB-Stick-Test steht noch aus.
 
+- Home-Zuordnung zu Deck: Home aus anderer App und nach Beenden des Launchers,
+  Samsung-Fallback und Wiederherstellung der Originalzuordnung am 25.10.2026
+  geprüft. Details: [DEFAULT-HOME.md](DEFAULT-HOME.md).
+
 ## Nicht als fertig ausgeben
 
-- Kein bestätigter Kaltstart-Autostart und kein Ersatz der Home-Taste.
+- Kein bestätigter Kaltstart-Autostart. Die Home-Taste ist separat erfolgreich umgestellt.
 - Kein dauerhaft entsperrter Bootloader, kein getestetes Custom-Firmware-Image.
 - Native Maus-/Texteingabe und alle Controller-Modelle sind nicht vollständig
   hardwareverifiziert. Virtuelle uinput-Tasten alleine bewegten das Menü nicht.

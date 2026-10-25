@@ -32,6 +32,9 @@ Der Installer lädt Werkzeuge herunter und konfiguriert nur den PC. Er führt ke
 PNG-Aufnahmen und Wake-on-LAN über die externe Bridge sind ebenfalls verfügbar.
 Das vorhandene Webinterface bleibt als Browser-Fernbedienung nutzbar.
 
+[Deck als Standard-Home und Rückweg zu Samsung](docs/DEFAULT-HOME.md):
+optional, separat eingerichtet und auf dem M7 geprüft.
+
 ## Getestet
 
 Samsung LS32BM700UUXEN, T-NKLBWWC-1720.7, Tizen 6.5, ARMv7, .NET 3.1. Keine allgemeine Kompatibilitätszusage für andere Modelle. Web-Login und Live-Messungen sowie temporärer Root-Zugriff wurden an diesem Gerät geprüft. Automatisierte Tests prüfen Zugriffsschutz, CSRF und Auftragsverarbeitung. Fernbedienungs-WebSocket benötigt die Zustimmung am TV. Echte PNG-Bildschirmaufnahmen werden unterstützt; flüssiges Video-Streaming ist nicht implementiert.
