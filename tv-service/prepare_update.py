@@ -28,10 +28,10 @@ def prepare(package,state,out):
  return public
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('package',type=Path);p.add_argument('--stage',action='store_true');a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('package',type=Path);p.add_argument('--stage',action='store_true');p.add_argument('--baseline',action='store_true',help='Save this exact installed version as rollback baseline');a=p.parse_args()
  state=HERE.parent/'.state/tv-service';out=state/'pending-update';public=prepare(a.package,state,out)
  print('Signed update:',out)
- if not a.stage:return
+ if not (a.stage or a.baseline):return
  from tv import TV,SDB,HOST
  # Trust key must already be provisioned by install_tv.py, never by this update.
  archive=state/'pending-update.tar.gz'
@@ -40,7 +40,12 @@ def main():
  remote='/home/owner/share/tmp/sdk_tools/deck-update.tar.gz'
  subprocess.run([str(SDB),'connect',HOST+':26101'],check=True)
  subprocess.run([str(SDB),'-s',HOST+':26101','push',str(archive),remote],check=True)
- r=TV().root('set -e; test -f /opt/usr/tizen-deck/state/update-public.der; umask 077; mkdir -p /opt/usr/tizen-deck/updates/incoming; tar -xzf '+remote+' -C /opt/usr/tizen-deck/updates/incoming; rm -rf /opt/usr/tizen-deck/updates/pending; mv /opt/usr/tizen-deck/updates/incoming /opt/usr/tizen-deck/updates/pending; rm -f '+remote)
+ slot='last-installed' if a.baseline else 'pending'
+ guard=''
+ if a.baseline:
+  version=json.loads((out/'manifest.json').read_text())['version']
+  guard="test \"$(sqlite3 /opt/dbspace/.pkgmgr_parser.db \"select package_version from package_info where package='TizenDeckX';\")\" = \""+version+"\"; "
+ r=TV().root('set -e; '+guard+'test -f /opt/usr/tizen-deck/state/update-public.der; umask 077; mkdir -p /opt/usr/tizen-deck/updates/incoming; tar -xzf '+remote+' -C /opt/usr/tizen-deck/updates/incoming; rm -rf /opt/usr/tizen-deck/updates/'+slot+'; mv /opt/usr/tizen-deck/updates/incoming /opt/usr/tizen-deck/updates/'+slot+'; rm -f '+remote)
  if r['exit_code']:raise RuntimeError(r['output'])
- print('Staged only. Install via Settings → Tizen-Deck-Updates on the monitor.')
+ print('Installed-version baseline saved.' if a.baseline else 'Staged only. Install via Settings → Tizen-Deck-Updates on the monitor.')
 if __name__=='__main__':main()

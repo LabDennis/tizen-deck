@@ -38,6 +38,10 @@ optional, separat eingerichtet und auf dem M7 geprüft.
 [App-Sitzungen automatisch schließen](docs/APP-LIFECYCLE.md): Standardoption im
 Launcher ab 1.6.0, mit laufendem nativen TV-Dienst.
 
+[Aktueller Systemausbau](docs/TV-SERVICE.md): native Audiobedienung, Netzstatus,
+rückgängig machbare Datenschutz-Sperren, signierte Launcher-Updates mit Rückfall
+und begrenzte Absturzbehandlung. [Stand der Boot-Untersuchung](docs/BOOT-RESEARCH.md).
+
 ## Getestet
 
 Samsung LS32BM700UUXEN, T-NKLBWWC-1720.7, Tizen 6.5, ARMv7, .NET 3.1. Keine allgemeine Kompatibilitätszusage für andere Modelle. Web-Login und Live-Messungen sowie temporärer Root-Zugriff wurden an diesem Gerät geprüft. Automatisierte Tests prüfen Zugriffsschutz, CSRF und Auftragsverarbeitung. Fernbedienungs-WebSocket benötigt die Zustimmung am TV. Echte PNG-Bildschirmaufnahmen werden unterstützt; flüssiges Video-Streaming ist nicht implementiert.

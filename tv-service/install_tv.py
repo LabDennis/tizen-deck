@@ -1,7 +1,7 @@
 """Install the optional TV backend on the explicitly configured monitor.
 Only a runtime systemd unit is created: no firmware remount or hidden boot hook.
 """
-import sys, os, json, secrets, tarfile, subprocess, shutil, shlex
+import sys, os, json, secrets, tarfile, subprocess, shutil, shlex, hashlib
 from pathlib import Path
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(HERE.parent))
@@ -29,21 +29,29 @@ next_dir='/opt/usr/tizen-deck.next-'+suffix
 backup='/opt/usr/tizen-deck.previous-'+suffix
 command=f"""set -e
 umask 077
+test "$(sha256sum {remote} | cut -d ' ' -f1)" = "{hashlib.sha256(archive.read_bytes()).hexdigest()}"
 mkdir {next_dir}
 tar -xzf {remote} -C {next_dir}
-if [ -f /opt/usr/tizen-deck/state/auth.json ]; then cp /opt/usr/tizen-deck/state/auth.json {next_dir}/state/auth.json; fi
-# Keep the originally enrolled update trust key on an upgrade.
-if [ -f /opt/usr/tizen-deck/state/update-public.der ]; then cp /opt/usr/tizen-deck/state/update-public.der {next_dir}/state/update-public.der; fi
+# Preserve credentials, TLS/control identity, privacy choices and enrolled update key.
+if [ -d /opt/usr/tizen-deck/state ]; then cp -a /opt/usr/tizen-deck/state/. {next_dir}/state/; fi
 if [ -d /opt/usr/tizen-deck/updates ]; then cp -a /opt/usr/tizen-deck/updates {next_dir}/updates; fi
 chown -R 0:0 {next_dir}
-chmod 700 {next_dir}/state
-chmod 600 {next_dir}/state/*
+find {next_dir}/state -type d -exec chmod 700 {{}} ';'
+find {next_dir}/state -type f -exec chmod 600 {{}} ';'
 systemctl stop deck-tv.service 2>/dev/null || true
 if [ -d /opt/usr/tizen-deck ]; then mv /opt/usr/tizen-deck {backup}; fi
 mv {next_dir} /opt/usr/tizen-deck
 cp /opt/usr/tizen-deck/deck-tv.service /run/systemd/system/deck-tv.service
 systemctl daemon-reload
-if systemctl start deck-tv.service && systemctl is-active --quiet deck-tv.service; then
+systemctl reset-failed deck-tv.service 2>/dev/null || true
+healthy=0
+if systemctl start deck-tv.service; then
+ for attempt in 1 2 3 4 5 6; do
+  sleep 1
+  if /usr/bin/dotnet /opt/usr/tizen-deck/DeckTV.dll --health-check; then healthy=1; break; fi
+ done
+fi
+if [ "$healthy" = 1 ] && systemctl is-active --quiet deck-tv.service; then
  echo active
  echo 'Previous installation: {backup}'
 else
@@ -53,6 +61,7 @@ else
   mv {backup} /opt/usr/tizen-deck
   cp /opt/usr/tizen-deck/deck-tv.service /run/systemd/system/deck-tv.service
   systemctl daemon-reload
+  systemctl reset-failed deck-tv.service 2>/dev/null || true
   systemctl start deck-tv.service || true
  fi
  echo 'Update failed; previous installation restored when available' >&2

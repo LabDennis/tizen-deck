@@ -76,3 +76,17 @@ HTTP-Bridge bestätigt ein bereits eingeschaltetes Gerät, ohne Power-Toggle ode
 Weckpakete zu senden. Ein gesonderter echter Standby-Versuch über den Wake-Modulpfad
 weckte den Monitor nach 80 Sekunden Schlaf; API, nativer Dienst und SDB waren danach
 wieder erreichbar. Details und Grenzen: [PC-REMOTE.md](PC-REMOTE.md).
+
+## Systemausbau 1.7.2
+
+- Eigene Lautstärke-/Stummsteuerung über TVAudioControl und WLAN-/IP-Anzeige.
+- Signierte Launcher-Updates prüfen die installierte Version. Hardware-Rückfall
+  1.7.0 → 1.6.0 → 1.7.0 bestanden; aktueller Stand 1.7.2 mit Rückfall 1.7.1.
+- Drei absichtliche Launcher-Prozessabbrüche wurden gezählt; Samsung Home erschien
+  beim dritten. Danach wurde Deck wieder geöffnet. Kein Langzeittest.
+- Fünf genau benannte Analyse-/Diagnosedienste lassen sich maskieren und wieder
+  freigeben; beide Richtungen gegen den tatsächlichen Dienststatus geprüft.
+- 80 schnelle Navigationseingaben: gleicher Launcher-PID; PSS vor/nach/nach acht
+  Sekunden Erholung etwa 74,4 / 80,2 / 73,4 MiB. Das ist kein FPS-Benchmark.
+- Die begrenzte Gaming-Hub-DLL-Probe lief als UID 5001, nicht als Root. Original
+  wiederhergestellt und SHA-256 geprüft. [Boot-Untersuchung](BOOT-RESEARCH.md).

@@ -71,7 +71,7 @@ internal static class ApplicationPolicy
             return output.Result;
         }
     }
-    static int Focus() {
+    internal static int Focus() {
         var text=Execute("/usr/bin/dbus-send",new[]{"--system","--print-reply","--reply-timeout=1000","--dest=org.enlightenment.wm","/org/enlightenment/wm","org.enlightenment.wm.proc.GetFocusProc"});
         var m=Regex.Match(text,@"\bint32 (\d+)");return m.Success?int.Parse(m.Groups[1].Value):-1;
     }
