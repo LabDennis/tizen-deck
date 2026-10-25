@@ -32,8 +32,11 @@ Der Installer lädt Werkzeuge herunter und konfiguriert nur den PC. Er führt ke
 PNG-Aufnahmen und Wake-on-LAN über die externe Bridge sind ebenfalls verfügbar.
 Das vorhandene Webinterface bleibt als Browser-Fernbedienung nutzbar.
 
-[Deck als Standard-Home und Rückweg zu Samsung](docs/DEFAULT-HOME.md):
+[Deck als Standard-Home, Autostart und Rückweg zu Samsung](docs/DEFAULT-HOME.md):
 optional, separat eingerichtet und auf dem M7 geprüft.
+
+[App-Sitzungen automatisch schließen](docs/APP-LIFECYCLE.md): Standardoption im
+Launcher ab 1.6.0, mit laufendem nativen TV-Dienst.
 
 ## Getestet
 

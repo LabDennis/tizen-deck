@@ -18,3 +18,5 @@ tv-service/dist/
 
 tests/native-updates/bin/
 tests/native-updates/obj/
+tests/native-apps/bin/
+tests/native-apps/obj/

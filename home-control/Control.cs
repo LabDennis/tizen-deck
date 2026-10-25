@@ -1,5 +1,5 @@
 // Adapted from Arn0 Launcher, Copyright (c) 2026 Arnaud Etienne (MIT).
-// See NOTICE. Device guard and two-setting rollback adapted for Tizen Deck.
+// See NOTICE. Device guard and Home/startup rollback adapted for Tizen Deck.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,6 +12,7 @@ internal static class Control
     private const string TargetPackage = "TizenDeckX";
     private const string MainOperation = "http://tizen.org/appcontrol/operation/main";
     private const string AutoKey = "db/menu/smart_hub/ontvsetting/auto_start";
+    private const string LastAppKey = "db/menu/app_booting";
     private const string HomeKey = "db/appfw/home_appid";
     private static readonly string[] Keys = {
         HomeKey,
@@ -29,6 +30,7 @@ internal static class Control
     [DllImport("libvconf.so.0")] private static extern IntPtr vconf_get_str(string key);
     [DllImport("libvconf.so.0")] private static extern int vconf_set_str(string key, string value);
     [DllImport("libvconf.so.0")] private static extern int vconf_get_int(string key, out int value);
+    [DllImport("libvconf.so.0")] private static extern int vconf_set_int(string key, int value);
     [DllImport("libc")] private static extern uint getuid();
     [DllImport("libc")] private static extern void free(IntPtr ptr);
 
@@ -37,6 +39,7 @@ internal static class Control
         public string Home { get; set; }
         public Dictionary<string, string> Strings { get; set; }
         public int Autostart { get; set; }
+        public int? LastAppAutostart { get; set; }
     }
 
     private static void Guard()
@@ -80,6 +83,9 @@ internal static class Control
         int autostart;
         if (vconf_get_int(AutoKey, out autostart) != 0) throw new Exception("Cannot read " + AutoKey);
         s.Autostart = autostart;
+        int lastApp;
+        if (vconf_get_int(LastAppKey, out lastApp) != 0) throw new Exception("Cannot read " + LastAppKey);
+        s.LastAppAutostart = lastApp;
         return s;
     }
 
@@ -87,7 +93,8 @@ internal static class Control
     {
         var s = JsonSerializer.Deserialize<Snapshot>(File.ReadAllText(path));
         if (s == null || String.IsNullOrWhiteSpace(s.Home) || s.Strings == null ||
-            s.Strings.Count != Keys.Length || (s.Autostart != 0 && s.Autostart != 1))
+            s.Strings.Count != Keys.Length || (s.Autostart != 0 && s.Autostart != 1) ||
+            (s.LastAppAutostart.HasValue && s.LastAppAutostart != 0 && s.LastAppAutostart != 1))
             throw new Exception("Invalid original snapshot");
         foreach (string key in Keys)
             if (!s.Strings.ContainsKey(key) || String.IsNullOrWhiteSpace(s.Strings[key]))
@@ -107,11 +114,32 @@ internal static class Control
             throw new Exception("Home operation write/readback failed");
     }
 
+    private static void SetInt(string key, int value)
+    {
+        int actual;
+        if ((value != 0 && value != 1) || vconf_set_int(key, value) != 0 ||
+            vconf_get_int(key, out actual) != 0 || actual != value)
+            throw new Exception("Write/readback failed: " + key);
+    }
+
+    private static void SetStartup(int autostart, int? lastApp)
+    {
+        Exception error = null;
+        try { SetInt(AutoKey, autostart); } catch (Exception ex) { error = ex; }
+        if (lastApp.HasValue)
+        {
+            try { SetInt(LastAppKey, lastApp.Value); }
+            catch (Exception ex) { error = error == null ? ex : new AggregateException(error, ex); }
+        }
+        if (error != null) throw error;
+    }
+
     private static void Restore(Snapshot s)
     {
         Exception error = null;
         try { SetHome(s.Home); } catch (Exception ex) { error = ex; }
         try { SetString(HomeKey, s.Strings[HomeKey]); } catch (Exception ex) { error = error == null ? ex : new AggregateException(error, ex); }
+        try { SetStartup(s.Autostart, s.LastAppAutostart); } catch (Exception ex) { error = error == null ? ex : new AggregateException(error, ex); }
         if (error != null) throw error;
     }
 
@@ -123,6 +151,8 @@ internal static class Control
                 throw new Exception("Setting differs from saved original: " + key);
         if (before.Autostart != original.Autostart)
             throw new Exception("Autostart differs from saved original");
+        if (original.LastAppAutostart.HasValue && before.LastAppAutostart != original.LastAppAutostart)
+            throw new Exception("Last-app autostart differs from saved original");
     }
 
     private static void RequireRestorable(Snapshot before, Snapshot original)
@@ -144,10 +174,39 @@ internal static class Control
                 Console.WriteLine("DECK_QUERY=" + JsonSerializer.Serialize(Query()));
                 return 0;
             }
-            if (args.Length != 2 || (args[0] != "apply" && args[0] != "restore" && args[0] != "verify"))
-                throw new Exception("Use query or verify|apply|restore SNAPSHOT");
+            if (args.Length != 2 || (args[0] != "apply" && args[0] != "restore" && args[0] != "verify" && args[0] != "boot-enable" && args[0] != "boot-restore"))
+                throw new Exception("Use query or verify|apply|restore|boot-enable|boot-restore SNAPSHOT");
             Snapshot original = LoadSnapshot(args[1]);
             Snapshot before = Query();
+            if ((before.Autostart != 0 && before.Autostart != 1) ||
+                (before.LastAppAutostart != 0 && before.LastAppAutostart != 1))
+                throw new Exception("Unexpected autostart state; stopped");
+            if (args[0] == "boot-enable" || args[0] == "boot-restore")
+            {
+                RequireRestorable(before, original);
+                if (!original.LastAppAutostart.HasValue)
+                    throw new Exception("Baseline predates standby setup; save original LastAppAutostart before changing it");
+                if (args[0] == "boot-enable")
+                {
+                    if (before.Home != Target || before.Strings[HomeKey] != Target ||
+                        !Directory.Exists("/opt/usr/home/owner/apps_rw/" + TargetPackage) ||
+                        util_is_appbooting_supported_webapp_byappid(Target) == 0)
+                        throw new Exception("Set and test Deck as Home before enabling startup");
+                }
+                try
+                {
+                    SetStartup(args[0] == "boot-enable" ? 1 : original.Autostart,
+                               args[0] == "boot-enable" ? 0 : original.LastAppAutostart);
+                }
+                catch (Exception writeError)
+                {
+                    try { SetStartup(before.Autostart, before.LastAppAutostart); }
+                    catch (Exception restoreError) { throw new AggregateException(writeError, restoreError); }
+                    throw;
+                }
+                Console.WriteLine("DECK_BOOT=" + JsonSerializer.Serialize(Query()));
+                return 0;
+            }
             if (args[0] == "verify")
             {
                 RequireOriginal(before, original);

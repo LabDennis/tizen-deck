@@ -40,11 +40,14 @@ und gehören nicht in Kompatibilitätsberichte.
 
 - Home-Zuordnung zu Deck: Home aus anderer App und nach Beenden des Launchers,
   Samsung-Fallback und Wiederherstellung der Originalzuordnung am 25.10.2026
-  geprüft. Details: [DEFAULT-HOME.md](DEFAULT-HOME.md).
+  geprüft. Vollständiger Kernel-Neustart mit geänderter Boot-ID und Deck im
+  Vordergrund ohne Startbefehl vom PC ebenfalls bestätigt. Auch nach Standby und
+  Wake-on-LAN erscheint Deck, wenn die letzte App nicht automatisch gestartet wird. Details: [DEFAULT-HOME.md](DEFAULT-HOME.md).
 
 ## Nicht als fertig ausgeben
 
-- Kein bestätigter Kaltstart-Autostart. Die Home-Taste ist separat erfolgreich umgestellt.
+- Native-Webserver-Autostart weiterhin nicht eingerichtet. Der Launcher startet
+  nach geprüftem Kernel-Neustart selbst; physisches Trennen vom Strom ist ungetestet.
 - Kein dauerhaft entsperrter Bootloader, kein getestetes Custom-Firmware-Image.
 - Native Maus-/Texteingabe und alle Controller-Modelle sind nicht vollständig
   hardwareverifiziert. Virtuelle uinput-Tasten alleine bewegten das Menü nicht.
