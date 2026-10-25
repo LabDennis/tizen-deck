@@ -31,6 +31,12 @@ und gehören nicht in Kompatibilitätsberichte.
 - Bluetooth-Audio-Liste über `org.tizen.btaudiolist`.
 - Der Compositor-Key-Aufruf `enlightenment_input_key Right` bewegt tatsächlich
   die Launcher-Kategorie; die native Web-Fernbedienung bewegt die Kategorie ebenfalls nachweislich.
+- Launcher 1.4.0: Flappy Smasnug unter Extras startet über die native
+  Web-Fernbedienung. Ein Sturz zeigt den LCD-Schadenseffekt; Zurück führt wieder
+  zur ausgewählten Launcher-Kachel. Durch Compositor-Aufnahmen geprüft.
+- Der Eigentümer hat den normalen Menü-Klickton bestätigt. Eigene USB-Sounds
+  sind implementiert und mit simulierter Filesystem-API getestet; der echte
+  USB-Stick-Test steht noch aus.
 
 ## Nicht als fertig ausgeben
 
