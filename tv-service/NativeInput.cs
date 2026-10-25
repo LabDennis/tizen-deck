@@ -1,15 +1,17 @@
-using System;using System.Text;using System.Text.Json;using System.Runtime.InteropServices;using System.Collections.Generic;
-static class NativeInput{
- [DllImport("libc",SetLastError=true)]static extern int open(string p,int f);
- [DllImport("libc",SetLastError=true)]static extern int close(int fd);
- [DllImport("libc",SetLastError=true)]static extern int ioctl(int fd,uint req,int arg);
- [DllImport("libc",SetLastError=true)]static extern IntPtr write(int fd,byte[] data,UIntPtr count);
- static int fd=-1,x=0,y=0;static bool positioned=false;static object gate=new object();
- static Dictionary<string,int> keys=new Dictionary<string,int>{{"KEY_UP",103},{"KEY_DOWN",108},{"KEY_LEFT",105},{"KEY_RIGHT",106},{"KEY_ENTER",28},{"KEY_RETURN",158},{"KEY_BACKSPACE",14},{"KEY_TAB",15},{"KEY_HOME",102},{"KEY_MENU",139},{"KEY_VOLUP",115},{"KEY_VOLDOWN",114},{"KEY_MUTE",113},{"KEY_PLAY",207},{"KEY_PAUSE",119},{"KEY_STOP",128}};
- static void Require(int r){if(r<0)throw new Exception("Eingabegerät nicht verfügbar ("+Marshal.GetLastWin32Error()+")");}
- static void Write(byte[] b){if(write(fd,b,(UIntPtr)b.Length).ToInt64()!=b.Length)throw new Exception("Eingabe konnte nicht übertragen werden");}
- static void Init(){if(fd>=0)return;fd=open("/dev/uinput",1|2048);Require(fd);try{Require(ioctl(fd,0x40045564,0));Require(ioctl(fd,0x40045564,1));Require(ioctl(fd,0x40045564,2));for(int i=0;i<768;i++)Require(ioctl(fd,0x40045565,i));foreach(int i in new[]{0,1,8})Require(ioctl(fd,0x40045566,i));var d=new byte[1116];Encoding.ASCII.GetBytes("Tizen Deck remote input").CopyTo(d,0);BitConverter.GetBytes((ushort)3).CopyTo(d,80);BitConverter.GetBytes((ushort)0x1209).CopyTo(d,82);BitConverter.GetBytes((ushort)0x2026).CopyTo(d,84);Write(d);Require(ioctl(fd,0x5501,0));}catch{close(fd);fd=-1;positioned=false;throw;}}
- static void Event(ushort type,ushort code,int value){int off=IntPtr.Size*2;var b=new byte[off+8];BitConverter.GetBytes(type).CopyTo(b,off);BitConverter.GetBytes(code).CopyTo(b,off+2);BitConverter.GetBytes(value).CopyTo(b,off+4);Write(b);}
- static void Sync(){Event(0,0,0);}static void Key(int code){Event(1,(ushort)code,1);Sync();Event(1,(ushort)code,0);Sync();}
- public static object Send(JsonElement d){lock(gate){string key=d.TryGetProperty("key",out var k)?k.GetString():"";string text=d.TryGetProperty("text",out var t)?t.GetString():"";bool mouse=d.TryGetProperty("mouse",out var m);if((key!=""?1:0)+(text!=""?1:0)+(mouse?1:0)>1)throw new Exception("Nur eine Eingabe pro Anfrage");if(key==""&&text==""&&!mouse)return new{message="Lokale Eingabesteuerung bereit"};if(key!=""&&!keys.ContainsKey(key))throw new Exception("Taste nicht unterstützt");if(text.Length>500)throw new Exception("Text zu lang");if(text!="")throw new Exception("Freitext am nativen TV-Dienst noch nicht verfügbar; Bildschirmtastatur verwenden");int nx=0,ny=0;if(mouse){nx=m.GetProperty("x").GetInt32();ny=m.GetProperty("y").GetInt32();if(nx<0||ny<0||nx>8192||ny>8192)throw new Exception("Ungültige Mausposition");}Init();if(mouse){if(!positioned){Event(2,0,-32767);Event(2,1,-32767);Sync();positioned=true;x=y=0;}Event(2,0,nx-x);Event(2,1,ny-y);Sync();x=nx;y=ny;}else Key(keys[key]);return new{message="Eingabe gesendet"};}}
+using System;using System.Text.Json;using System.Diagnostics;using System.Collections.Generic;
+// Uses the compositor's own tested key API; does not register a fake input device.
+static class NativeInput {
+ static readonly object gate=new object();
+ static readonly Dictionary<string,string> keys=new Dictionary<string,string>{{"KEY_UP","Up"},{"KEY_DOWN","Down"},{"KEY_LEFT","Left"},{"KEY_RIGHT","Right"},{"KEY_ENTER","Return"},{"KEY_RETURN","XF86Back"},{"KEY_BACKSPACE","BackSpace"},{"KEY_TAB","Tab"},{"KEY_HOME","XF86Home"},{"KEY_MENU","XF86Menu"},{"KEY_VOLUP","XF86AudioRaiseVolume"},{"KEY_VOLDOWN","XF86AudioLowerVolume"},{"KEY_MUTE","XF86AudioMute"},{"KEY_PLAY","XF86AudioPlay"},{"KEY_PAUSE","XF86AudioPause"},{"KEY_STOP","XF86AudioStop"}};
+ static void Key(string name){var start=new ProcessStartInfo("/usr/bin/enlightenment_input_key"){UseShellExecute=false,RedirectStandardOutput=true,RedirectStandardError=true};start.ArgumentList.Add(name);using(var p=Process.Start(start)){var output=p.StandardOutput.ReadToEndAsync();var error=p.StandardError.ReadToEndAsync();if(!p.WaitForExit(3000)){p.Kill(true);throw new Exception("Compositor antwortet nicht");}if(p.ExitCode!=0)throw new Exception("Compositor hat die Taste nicht angenommen");}}
+ public static object Send(JsonElement d){lock(gate){
+  string key=d.TryGetProperty("key",out var k)&&k.ValueKind==JsonValueKind.String?k.GetString():null;
+  string text=d.TryGetProperty("text",out var t)&&t.ValueKind==JsonValueKind.String?t.GetString():null;
+  bool mouse=d.TryGetProperty("mouse",out var m);
+  if((key!=null?1:0)+(text!=null?1:0)+(mouse?1:0)>1)throw new Exception("Nur eine Eingabe pro Anfrage");
+  if(mouse)throw new Exception("Native Zeigersteuerung noch nicht verifiziert. Pfeiltasten und OK verwenden.");
+  if(text!=null)throw new Exception("Native Freitexteingabe noch nicht verifiziert; Bildschirmtastatur verwenden.");
+  if(key!=null){if(!keys.ContainsKey(key))throw new Exception("Taste nicht unterstützt");Key(keys[key]);}
+  return new{message=key==null?"Compositor-Fernbedienung bereit":"Taste an den Compositor übergeben"};
+ }}
 }

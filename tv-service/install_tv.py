@@ -14,7 +14,7 @@ if not (state/'control-token').exists():
 if not (state/'server.pfx').exists():
  subprocess.run(['openssl','req','-x509','-newkey','rsa:2048','-nodes','-keyout',str(state/'server.key'),'-out',str(state/'server.crt'),'-days','365','-subj','/CN=Tizen Deck Monitor','-addext','subjectAltName=IP:'+HOST],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  subprocess.run(['openssl','pkcs12','-export','-legacy','-out',str(state/'server.pfx'),'-inkey',str(state/'server.key'),'-in',str(state/'server.crt'),'-passout','pass:'],check=True)
-for f in state.iterdir():f.chmod(0o600)
+for f in state.iterdir():f.chmod(0o700 if f.is_dir() else 0o600)
 archive=state/'install.tar.gz'
 with tarfile.open(archive,'w:gz') as t:
  for p in (HERE/'dist').rglob('*'):

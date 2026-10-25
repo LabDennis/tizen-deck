@@ -30,7 +30,7 @@ und gehören nicht in Kompatibilitätsberichte.
   und Live-Metriken aus `/proc`.
 - Bluetooth-Audio-Liste über `org.tizen.btaudiolist`.
 - Der Compositor-Key-Aufruf `enlightenment_input_key Right` bewegt tatsächlich
-  die Launcher-Kategorie; die Integration in den nativen Dienst wird noch geprüft.
+  die Launcher-Kategorie; die native Web-Fernbedienung bewegt die Kategorie ebenfalls nachweislich.
 
 ## Nicht als fertig ausgeben
 

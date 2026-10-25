@@ -14,5 +14,8 @@ vm.runInNewContext(fs.readFileSync(__dirname+'/../static/input.js','utf8'),conte
  handlers.mouseenter();handlers.mousemove({clientX:480,clientY:270});await new Promise(setImmediate);assert.equal(sent[1].data.mouse.x,960);assert.equal(sent[1].data.mouse.y,540);
  globalHandlers.blur();handlers.click({preventDefault(){}});assert.equal(sent.length,2);
  handlers.mouseenter();document.activeElement={tagName:'INPUT'};docHandlers.keydown({key:'a',preventDefault(){throw Error('Must not capture form input');}});assert.equal(sent.length,2);
+ document.activeElement=area;context.window.deckInputCapabilities={pointer:false,text:false};
+ handlers.mousemove({clientX:100,clientY:100});docHandlers.keydown({key:'b',preventDefault(){throw Error('Unsupported text must not be captured');}});await new Promise(setImmediate);assert.equal(sent.length,2);
+ docHandlers.keydown(key);await new Promise(setImmediate);assert.equal(sent.length,3);assert.equal(sent[2].data.key,'KEY_DOWN');
  console.log('Input hover, leave, blur, focus and coordinate mapping passed');
 })();
