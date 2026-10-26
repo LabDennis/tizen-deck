@@ -16,7 +16,7 @@ must stay outside Git.
    `.venv/bin/python tv-service/install_tv.py` with the intended `TIZEN_HOST`.
 4. Build the launcher with `DECK_DEVICE_CONFIG` pointing to the generated
    `.state/tv-service/launcher-config.js`; install this device-specific WGT.
-5. In Settings → Webserver-Konfiguration set credentials and enable HTTPS.
+5. In Settings → Netzwerk & Webserver → Webserver-Konfiguration set credentials and enable HTTPS.
    Passwords use salted PBKDF2 hashes. Trust the locally generated certificate
    on the client before login.
 
@@ -46,7 +46,7 @@ The baseline command refuses a version mismatch. Then stage a newer build:
 python tv-service/prepare_update.py /path/to/new/TizenDeckX.wgt --stage
 ```
 
-Settings → Tizen-Deck-Updates verifies and installs the package. Validation covers
+Settings → System → Tizen-Deck-Updates verifies and installs the package. Validation covers
 the enrolled RSA signature, SHA-256, app/package IDs, XML version and size limits.
 Normal installation refuses equal or older versions. The package manager performs
 its own WGT checks, and the updater reads back the installed package version.

@@ -1,6 +1,6 @@
 # Getesteter Monitor und Entwicklungsnachweis
 
-Stand: 25. Oktober 2026. Dieses Projekt wurde für ein konkretes, vom Eigentümer
+Stand: 26. Oktober 2026. Dieses Projekt wurde für ein konkretes, vom Eigentümer
 bereitgestelltes Gerät entwickelt. Eine ähnliche Modellnummer ist keine getestete
 Kompatibilität.
 
@@ -175,3 +175,60 @@ Dateien wurden jeweils entfernt und die wiederhergestellten Quellen geprüft.
 
 Endstand: Launcher **1.9.1**, Rückfall **1.9.0**, TV-Dienst weiterhin **1.8.2**.
 Paketversion und fünf installierte Quelldateien per SHA-256 bestätigt.
+
+
+## Nachtrag: Einstellungen und Belastungstest, 1.10.1
+
+Installierter Stand: Launcher **1.10.1**, Rückfall **1.10.0**, TV-Dienst **1.8.2**.
+Paketversion und sieben installierte Dateien per SHA-256 geprüft. Samsung Home
+bleibt direkt in Einstellungen erreichbar; die übrigen Funktionen verteilen sich
+auf Bild & Ton, Geräte, Netzwerk & Webserver sowie System. Favoriten lassen sich
+sortieren, Launcher-Einstellungen als geprüfte JSON-Datei sichern/wiederherstellen.
+Eine Vorschau geht der Übernahme voraus, Zugangsdaten sind nicht enthalten.
+
+10 Logiktests und 12 Browser-Suites bestanden, einschließlich Grenzwiederholungen,
+Untermenü-Zurück, Favoritenreihenfolge sowie simulierter USB-Unterbrechungen.
+500 Untermenüwechsel im lokalen Chromium hinterlassen nach Speicherbereinigung
+weiterhin 230 DOM-Knoten und 46 Ereignishandler (Heap 871.328 → 898.060 Byte).
+
+Je 1.544 echte Richtungseingaben plus 120 Sekunden Ruhe am M7:
+- 1.9.1: PSS 76,12 MiB → Spitze 94,04 → Ende 90,67; Dauer 6,15 Minuten.
+- 1.10.0: PSS 66,44 MiB → Spitze/Ende 90,48; Dauer 5,92 Minuten.
+
+Beide Läufe blieben im selben jeweiligen Prozess, ohne Wächterfehler. Unterschiedliche
+Startzustände erlauben keinen isolierten kausalen Vergleich. 1.10.1 ändert nur
+USB-Fehlerbehandlung und Versionsanzeige gegenüber der hier getesteten 1.10.0.
+Das verbleibende Wachstum des nativen Prozessspeichers ist weiterhin offen.
+Reale USB-Stick-/Controller-/Headsettests fehlen weiterhin.
+
+
+### Zusätzlicher Tonvergleich und Datei-API auf 1.10.1
+
+Zusätzlich 1.536 synthetische Richtungseingaben **innerhalb der TV-Webengine**,
+getrennt vom obigen Test mit echten Compositor-Tasten. Reihenfolge Ton an / aus /
+aus / an, je 384 Eingaben. Die Audiooption des Nutzers wurde nicht geändert.
+
+| Phase | Eingaben | Mittlerer rAF-Abstand | Maximum | Über 100 ms |
+|---|---:|---:|---:|---:|
+| sound-on-1 | 384 | 19.85 ms | 71.61 ms | 0 |
+| sound-off-1 | 384 | 21.06 ms | 75.59 ms | 0 |
+| sound-off-2 | 384 | 22.22 ms | 68.88 ms | 0 |
+| sound-on-2 | 384 | 20.96 ms | 90.64 ms | 0 |
+
+Alle vier Phasen blieben bei 1920×1080 ohne Root-Scroll oder JavaScript-Fehler.
+Das sind Browser-Zeichenintervalle, keine direkt gemessenen Panel-FPS.
+Auch in der zweiten stummen Phase stieg PSS zwischen den inneren Messpunkten von
+92.433 auf 105.173 KiB. Der Klickton ist somit keine alleinige Erklärung. Zwischendurch
+fällt PSS wieder ab; daraus lässt sich die genaue Ursache (etwa Engine-Caches oder
+Speicherbereinigung) nicht bestimmen. Das gemeldete JavaScript-Heap-Feld blieb
+pauschal bei 10.000.000 Byte und erlaubt hier keine brauchbare Detaildiagnose.
+
+Die Sicherung der sieben Einstellungsschlüssel wurde über die echte Tizen-Datei-API
+im privaten App-Speicher geschrieben, zurückgelesen und identisch bestätigt.
+Die Testdatei wurde entfernt. Das ersetzt keinen realen USB-Stick-Test.
+Sämtlicher Diagnosecode wurde entfernt, die ursprüngliche index.html per SHA-256
+verifiziert und der normale Launcher wieder gestartet.
+
+Abschließend Browser aus Deck gestartet und per Home zurückgekehrt: Fensterfokus
+wechselte nachweislich von `org.tizen.browser` zu `Tizen Deck XMB`. Kein
+Wächterfehler; die installierten Quellen stimmen weiterhin per SHA-256.

@@ -27,7 +27,7 @@ monitor verifies the RSA signature, SHA-256, firmware target, allowed ZIP paths,
 file types, sizes and actual DLL version. Equal/older releases cannot be installed
 as normal updates. A separately saved, hash-checked backup enables rollback.
 
-Use **Einstellungen → Tizen-Deck-Updates → TV-Dienst aktualisieren** to install
+Use **Einstellungen → System → Tizen-Deck-Updates → TV-Dienst aktualisieren** to install
 or restore a previous version. The UI reconnects after the service restart;
 a missing reply is shown as unknown state, not as proof that no update occurred.
 The authenticated HTTPS API also exposes `/api/backend/updates`, `/install` and

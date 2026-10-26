@@ -1,6 +1,6 @@
 # App-Sitzungen automatisch schließen
 
-Launcher 1.6.0 bietet **Einstellungen → Apps im Hintergrund**. Die Option ist
+Seit Launcher 1.6.0 gibt es **Apps im Hintergrund**; ab 1.10.0 liegt es unter **Einstellungen → System**. Die Option ist
 standardmäßig eingeschaltet. Bei Rückkehr zum sichtbaren Deck-Menü sowie vor
 dem nächsten App-Start fordert der Launcher den nativen TV-Dienst zum Aufräumen
 auf. Für Musik im Hintergrund lässt sich die Option ausschalten.
