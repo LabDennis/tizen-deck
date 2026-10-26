@@ -149,3 +149,29 @@ Es wurde weder auf dem Monitor bereitgestellt noch installiert.
 Der vom Nutzer gemeldete Bildfehler und der verbleibende Speicheranstieg sind erst
 nach Installation und erneuter Prüfung auf der Tizen-Webengine abschließend
 bewertbar. Keine Firmware- oder Boot-Änderung in diesem Arbeitsschritt.
+
+## Nachtrag: Randfehler und Grafikpausen, 1.9.1
+
+Der Eigentümer meldete den Fehler erneut bei eingeschaltetem Monitor. Die gelesene
+Paketversion war noch 1.8.5. Nach Installation von 1.9.0 waren die defekten rechten
+und unteren Ränder verschwunden, sowohl in Aufnahmen der Einstellungen oben/unten
+als auch nach 290 tatsächlichen Richtungseingaben. Der Eigentümer bestätigte die
+korrigierte Ansicht, meldete jedoch starkes Ruckeln.
+
+Der anschließende A/B-Test zeigte einen Nutzen durch eine eigene Grafikfläche für
+den statischen Hintergrund im sparsamen Profil. Ohne diese Ebene gab es in zwei
+Phasen (zusammen 256 Eingaben) 15 rAF-Abstände über 100 ms, Spitzen bis 267 ms.
+Die beiden Phasen mit Ebene blieben unter 57 ms. Ein eigener längerer Lauf mit
+512 Eingaben bestätigte die Verbesserung: gewichtet 19,27 ms, maximal 103 ms,
+ein Abstand über 100 ms. Ohne Ebene betrug der gewichtete Mittelwert 23,86 ms.
+Das sind Browser-Zeichenintervalle und begrenzte Versuche, keine direkten Panel-FPS
+oder ein abschließender Nachweis gegen längerfristiges Ruckeln/Speicherwachstum.
+
+1.9.1 übernimmt nur das Zwischenspeichern des Hintergrunds; die korrigierten
+Bildschirmgrenzen bleiben erhalten. Andere getestete Grafikvarianten wurden
+verworfen. Controller-Erkennung blieb aktiv, einzelne Abfragen lagen unter 0,43 ms.
+Fünf betroffene Browser-Prüfungen bestanden erneut. Diagnosecode und temporäre
+Dateien wurden jeweils entfernt und die wiederhergestellten Quellen geprüft.
+
+Endstand: Launcher **1.9.1**, Rückfall **1.9.0**, TV-Dienst weiterhin **1.8.2**.
+Paketversion und fünf installierte Quelldateien per SHA-256 bestätigt.
