@@ -87,3 +87,25 @@ Samsung beschreibt die Voraussetzung unter
 [Smart Monitor per Mobilgerät einschalten](https://www.samsung.com/au/support/displays/turn-on-samsung-smart-monitor-with-phone/).
 Die [IP-Control-Dokumentation](https://image-us.samsung.com/SamsungUS/samsungbusiness/tv-ci-resources/Samsung-IP-Control.pdf)
 erläutert, weshalb nach dem Einschlafen des IP-Servers ein Wake-Signal erforderlich ist.
+
+## Geprüfter Launcher-Neustart
+
+Mit DeckTV 1.9.1 über den nativen TV-Webserver:
+
+```sh
+python3 pc_remote.py --url https://TV_IP:8843 --ca .state/tv-service/server.crt restart
+```
+
+Startet ausschließlich Tizen Deck neu. Erfolg erfordert eine neue Prozess-ID,
+eine frische Rückmeldung aus dem aufgebauten Menü und das fokussierte Fenster
+`Tizen Deck XMB`. Ein reservierter Prozess oder die leere `file:///`-Seite reicht
+nicht. Nach einem Zeitlimit wird Samsung Home als Rückfall angefordert, sofern
+keine andere App aktiv ist; die CLI meldet dabei einen Fehler statt Erfolg.
+Ein Neustart des Monitors selbst findet nicht statt.
+
+Am 26.10.2026 auf dem genannten Monitor geprüft: reguläre Neustarts mit neuer
+Prozess-ID und sichtbarem Menü sowie ein Fehlerlauf mit absichtlich leerer
+Launcher-Seite. Der Fehlerlauf meldete `ready: false` und öffnete Samsung Home.
+Danach wurde die eigene Originaldatei wiederhergestellt, per SHA-256 geprüft und
+der Launcher erfolgreich neu gestartet. Fremde Apps und Samsung-Dateien wurden
+für diesen Test nicht ersetzt.

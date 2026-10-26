@@ -58,34 +58,18 @@ a firmware recovery image or independent root startup after cold boot. Failed
 updates keep their error state; inspect it before retrying. Backup folders are
 private under `/opt/usr/tizen-deck-updates` and are currently retained.
 
-## Optional release feed
+## Private LAN release feed
 
-**Release-Adresse konfigurieren** accepts an HTTPS directory containing exactly:
+DeckTV 1.9.1 and launcher 1.11.3 provide an authenticated HTTPS source hosted on the
+owner's PC, for both launcher and backend packages. See [LAN-UPDATES.md](LAN-UPDATES.md)
+for setup, certificate enrollment, publication and removal. Older direct-directory
+backend-only URLs must be migrated to the new base URL with `backend/` and
+`launcher/` subdirectories.
 
-- `manifest.json`
-- `manifest.sig` (binary RSA/SHA-256 signature)
-- `backend.zip`
-
-The directory is user-configured; no vendor endpoint or automatic polling is
-built in. It must use a TLS certificate trusted by the monitor, with no HTTP
-redirect, URL credentials, query string or fragment. Downloads are bounded to
-25 seconds overall and 16 MiB for the archive. Downloading and verifying a
-release only stages it; installation is a separate action. A failed verification
-keeps the previously staged package.
-
-The feed supports backend code only. **Do not publish a device-specific launcher
-WGT:** it contains that monitor's control configuration. Stage launcher updates
-privately using the same HTTPS helper instead:
-
-```sh
-python tv-service/prepare_update.py /path/to/TizenDeckX.wgt
-python tv-service/manage_updates.py .state/tv-service/pending-update \
-  --url https://MONITOR_IP:8843 --ca .state/tv-service/server.crt
-```
-
-No live release-feed address is configured for the test monitor yet. URL checks,
-bounded downloads, rejection cases and signature/package validation are tested
-locally; an actual hosted HTTPS feed still requires its address and a live test.
+On the test monitor both component downloads and signature checks succeeded from
+the PC source. Firmware and persistent boot behavior are unchanged. Launcher
+packages containing device control configuration stay in the authenticated private
+feed; do not publish them as public GitHub release assets.
 
 ## Tests
 

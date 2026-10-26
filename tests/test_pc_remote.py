@@ -15,6 +15,14 @@ class RemoteTests(unittest.TestCase):
         self.assertEqual(server_url('http://localhost:8765/'), 'http://localhost:8765')
         self.assertEqual(server_url('https://192.0.2.10:8843'), 'https://192.0.2.10:8843')
 
+    def test_native_restart(self):
+        r = Remote('http://localhost:8765')
+        r.job = Mock(return_value={'ready': True})
+        with self.assertRaises(ValueError): r.restart()
+        r.session = {'mode': 'tv'}
+        self.assertTrue(r.restart()['ready'])
+        r.job.assert_called_once_with('/api/launcher/restart', {'confirm': True})
+
     def test_keyboard(self):
         for seq, expected in [('\x1b[A', 'up'), ('\x1bOB', 'down'), ('\xe0K', 'left'),
                               ('\x1b', 'back'), (' ', 'ok'), ('\r', 'ok'), ('q', 'quit'), ('x', None)]:

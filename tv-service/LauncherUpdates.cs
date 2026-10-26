@@ -73,6 +73,14 @@ static class LauncherUpdates {
    can_rollback=rollback!=null&&Compare(rollback.version,installed)!=0,
    message=pending==null?"Kein lokales Update bereitgestellt.":available?"Signiertes Launcher-Update bereit. Die vorherige gesicherte Version bleibt als Rückfall erhalten.":"Das bereitgestellte Paket ist gleich alt oder älter. Kein normales Update möglich."};
  }}
+ internal static object Stage(string incoming){lock(Gate){
+  var manifest=Verify(incoming);Directory.CreateDirectory(Path.Combine(Root,"updates"));
+  var pending=Slot("pending");var old=Slot("stage-"+Guid.NewGuid().ToString("N"));
+  if(Directory.Exists(pending))Directory.Move(pending,old);
+  try{Directory.Move(incoming,pending);}catch{if(Directory.Exists(old))Directory.Move(old,pending);throw;}
+  if(Directory.Exists(old))Directory.Delete(old,true);
+  return new{message="Signiertes Launcher-Paket "+manifest.version+" bereit. Installation separat bestätigen.",version=manifest.version};
+ }}
  public static object Install() {lock(Gate){
   var installed=InstalledVersion();var m=Verify(Slot("pending"));
   if(Compare(m.version,installed)<=0)throw new Exception("Normale Updates müssen neuer sein; für Rückfälle die Wiederherstellung verwenden");

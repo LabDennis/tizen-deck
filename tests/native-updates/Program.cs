@@ -25,6 +25,8 @@ class Test {
   LauncherUpdates.Install();Check(installed=="1.7.0"&&Status().GetProperty("can_rollback").GetBoolean(),"successful upgrade retains rollback");
   LauncherUpdates.Rollback();Check(installed=="1.6.0","rollback version");LauncherUpdates.Rollback();Check(installed=="1.7.0","reverse rollback preserves working package");
   foreach(var v in new[]{"1.7.0","1.5.0"}){Package("pending",v);Check(!Status().GetProperty("available").GetBoolean(),"old/equal unavailable");int n=installs;Refused(()=>LauncherUpdates.Install(),"old/equal refused");Check(installs==n,"no installer called for downgrade");}
+  Package("download","1.8.0","wrong.app");Refused(()=>LauncherUpdates.Stage(Slot("download")),"bad download staged");Check(Status().GetProperty("version").GetString()=="1.5.0","failed stage replaced previous package");
+  int beforeStage=installs;Package("download","1.8.0");LauncherUpdates.Stage(Slot("download"));Check(Status().GetProperty("version").GetString()=="1.8.0"&&installs==beforeStage,"stage must not install");
   Check(LauncherUpdates.Compare("1.10.0","1.9.0")>0,"numeric version ordering");
   Console.WriteLine("Updates: signatures/hash/identity, numeric versions, equal/downgrade refusal, partial-install recovery, retained and reversible rollback passed.");
  }

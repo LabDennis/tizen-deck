@@ -2,6 +2,9 @@
 
 Lokale, passwortgeschützte Webverwaltung für Samsung-Tizen-Monitore: Status, Prozesse, Dienste, Pakete, Netzwerk, Fernbedienung und Konsole. Die externe Bridge verwendet ausdrücklich gewählte temporäre Root-Sitzungen; optional kann ein eigener Dienst direkt auf dem Monitor laufen.
 
+Ab TV-Dienst 1.9.1: [private signierte Updates vom PC](docs/LAN-UPDATES.md)
+für Dienst und Launcher sowie ein geprüfter Launcher-Neustart über die Remote-CLI.
+
 ## Installation (Linux x86_64)
 
 Voraussetzungen: Python 3.12+, Git, curl, Netzwerk zum eigenen Monitor.

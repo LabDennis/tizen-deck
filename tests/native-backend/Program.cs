@@ -1,4 +1,4 @@
-using System;using System.IO;using System.IO.Compression;using System.Text.Json;using System.Security.Cryptography;using System.Reflection;using System.Linq;using System.Net;using System.Net.Http;using System.Threading;using System.Threading.Tasks;
+using System;using System.Security.Cryptography.X509Certificates;using System.Net.Security;using System.IO;using System.IO.Compression;using System.Text.Json;using System.Security.Cryptography;using System.Reflection;using System.Linq;using System.Net;using System.Net.Http;using System.Threading;using System.Threading.Tasks;
 static class ServiceHealth {internal static string Version=>"1.8.0";}
 class Test {
  static RSA rsa=RSA.Create(2048);static string root=Path.Combine(Path.GetTempPath(),"deck-backend-test-"+Guid.NewGuid().ToString("N")),slot,key;
@@ -16,8 +16,25 @@ class Test {
   handler.Code=HttpStatusCode.Redirect;Refused(()=>ReleaseFeed.Download(client,new Uri("https://example.test/file"),p,5,CancellationToken.None).GetAwaiter().GetResult(),"redirect accepted");Check(!File.Exists(p),"redirect must not write file");
   handler.Code=HttpStatusCode.OK;handler.Data=new byte[10];Refused(()=>ReleaseFeed.Download(client,new Uri("https://example.test/file"),p,5,CancellationToken.None).GetAwaiter().GetResult(),"oversize download");}
  }
+ static void FeedConfig(){
+  BackendUpdates.Root=root;Directory.CreateDirectory(Path.Combine(root,"state"));
+  const string pin="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",token="test_private_read_token_01234567890123456789";
+  ReleaseFeed.Save("https://192.0.2.10:8845/",pin,token);
+  var status=JsonSerializer.Serialize(ReleaseFeed.Status());Check(!status.Contains(token)&&status.Contains("\"authenticated\":true"),"credentials exposed");
+  ReleaseFeed.Save("https://192.0.2.10:8845/");Check(File.ReadAllText(Path.Combine(root,"state/release-feed.json")).Contains(token),"same source lost credentials");
+  ReleaseFeed.Save("https://192.0.2.11:8845/");Check(!File.ReadAllText(Path.Combine(root,"state/release-feed.json")).Contains(token),"credentials followed new destination");
+  Refused(()=>ReleaseFeed.Save("https://example.test/","bad",token),"invalid certificate pin");
+  Refused(()=>ReleaseFeed.Save("https://example.test/",pin,"bad\r\nHeader"),"invalid token");
+  var req=new CertificateRequest("CN=Test",rsa,HashAlgorithmName.SHA256,RSASignaturePadding.Pkcs1);
+  using(var cert=req.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1),DateTimeOffset.UtcNow.AddDays(1))){
+   string hash=Convert.ToHexString(SHA256.HashData(cert.RawData)).ToLowerInvariant();
+   Check(ReleaseFeed.Trust(cert,SslPolicyErrors.RemoteCertificateChainErrors,hash),"enrolled local cert rejected");
+   Check(!ReleaseFeed.Trust(cert,SslPolicyErrors.None,pin),"wrong pinned cert accepted");
+   Check(!ReleaseFeed.Trust(cert,SslPolicyErrors.RemoteCertificateChainErrors,""),"untrusted certificate accepted");
+  }
+ }
  static void Main(){Directory.CreateDirectory(root);slot=Path.Combine(root,"pending");Directory.CreateDirectory(slot);key=Path.Combine(root,"public.der");File.WriteAllBytes(key,rsa.ExportSubjectPublicKeyInfo());try{
-  Downloads();Check(ReleaseFeed.Validate("https://example.test/releases")=="https://example.test/releases/","feed normalized");Check(ReleaseFeed.Validate("")=="","empty feed disabled");foreach(var bad in new[]{"http://example.test/","https://user:pass@example.test/","https://example.test/?token=x","https://example.test/#secret","file:///etc/passwd"})Refused(()=>ReleaseFeed.Validate(bad),"invalid feed accepted");
+  FeedConfig();Downloads();Check(ReleaseFeed.Validate("https://example.test/releases")=="https://example.test/releases/","feed normalized");Check(ReleaseFeed.Validate("")=="","empty feed disabled");foreach(var bad in new[]{"http://example.test/","https://user:pass@example.test/","https://example.test/?token=x","https://example.test/#secret","file:///etc/passwd"})Refused(()=>ReleaseFeed.Validate(bad),"invalid feed accepted");
   Package();Check(BackendUpdates.Verify(slot,key,"T-NKLBWWC-1720.7").version=="1.8.0","valid signed release");
   foreach(var file in new[]{"manifest.json","manifest.sig","backend.zip"}){var p=Path.Combine(slot,file);var b=File.ReadAllBytes(p);var c=(byte[])b.Clone();c[c.Length-1]^=1;File.WriteAllBytes(p,c);Refused(()=>BackendUpdates.Verify(slot,key,"T-NKLBWWC-1720.7"),"tampered "+file);File.WriteAllBytes(p,b);}
   Sign("wrong");Refused(()=>BackendUpdates.Verify(slot,key,"T-NKLBWWC-1720.7"),"component mismatch");Sign(version:"1.8.0;echo");Refused(()=>BackendUpdates.Verify(slot,key,"T-NKLBWWC-1720.7"),"invalid version");Sign();Refused(()=>BackendUpdates.Verify(slot,key,"T-NKLBWWC-9999.0"),"other firmware");

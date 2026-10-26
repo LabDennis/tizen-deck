@@ -111,6 +111,11 @@ class Remote:
             raise ValueError('Unbekannte Taste: ' + name)
         return self.request('/api/input', {'key': KEYS[name]})
 
+    def restart(self):
+        if self.session.get('mode') != 'tv':
+            raise ValueError('Launcher-Neustart benötigt den nativen TV-Webserver als --url.')
+        return self.job('/api/launcher/restart', {'confirm': True})
+
     def wake(self):
         if self.session.get('mode') == 'tv':
             raise ValueError('Zum Aufwecken --url http://localhost:8765 verwenden. Der native TV-Webserver schläft mit dem Monitor.')
@@ -202,6 +207,7 @@ def main(argv=None):
     commands.add_parser('interactive', help='Pfeiltasten-Fernbedienung (Standard)')
     command = commands.add_parser('key', help='Einzelne Taste senden')
     command.add_argument('name', choices=list(KEYS))
+    commands.add_parser('restart', help='Launcher neu starten und sichtbares Menü prüfen')
     commands.add_parser('status', help='Gerätestatus lesen')
     commands.add_parser('wake', help='Über externen Deck-Server aus Standby wecken')
     command = commands.add_parser('capture', help='Bildschirmaufnahme als PNG speichern')
@@ -220,6 +226,8 @@ def main(argv=None):
             return 0
         if args.command == 'key':
             result = remote.key(args.name)
+        elif args.command == 'restart':
+            result = remote.restart()
         elif args.command == 'wake':
             result = remote.wake()
         elif args.command == 'capture':
@@ -228,6 +236,8 @@ def main(argv=None):
             result = remote.text(args.value)
         else:
             result = remote.request('/api/device')
+        if args.command == 'restart' and result.get('ready') is False:
+            raise ValueError(result.get('message', 'Launcher nicht bereit'))
         print(result['message'] if 'message' in result else json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except (OSError, ValueError, KeyError) as error:
