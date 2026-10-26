@@ -232,3 +232,70 @@ verifiziert und der normale Launcher wieder gestartet.
 Abschließend Browser aus Deck gestartet und per Home zurückgekehrt: Fensterfokus
 wechselte nachweislich von `org.tizen.browser` zu `Tizen Deck XMB`. Kein
 Wächterfehler; die installierten Quellen stimmen weiterhin per SHA-256.
+
+
+## Launcher 1.11.1: Direktmodus und verschachtelte TV-Dialoge
+
+**Am 26.10.2026 installiert; Version und geänderte Quellen per SHA-256 bestätigt.**
+Der neue Direktmodus verzichtet auf gleitende Menütransformationen und
+Auswahlüberblendungen. Die bisherigen Profile bleiben unverändert verfügbar;
+Menütöne und der XMB-Aufbau bleiben erhalten.
+
+Temporärer Vergleich innerhalb der TV-Webengine, 256 horizontale Eingaben pro
+Phase, 65 ms Sollabstand; Original / Direkt / 30-ms-Übergänge / Original:
+
+| Modus | rAF-Mittel | Maximum | Abstände ≥34 ms |
+|---|---:|---:|---:|
+| Sparsam vorher | 19,30 ms | 55,33 ms | 78 / 933 |
+| Direkt | 17,15 ms | 34,06 ms | 1 / 1012 |
+| 30-ms-Übergänge | 20,71 ms | 67,81 ms | 78 / 956 |
+| Sparsam danach | 19,46 ms | 68,70 ms | 95 / 928 |
+
+Gegenprüfung mit horizontalen und vertikalen Eingaben, 320 Tasten pro Phase:
+
+| Modus | rAF-Mittel | Maximum | Abstände ≥34 ms |
+|---|---:|---:|---:|
+| Sparsam vorher | 17,01 ms | 54,09 ms | 29 / 1297 |
+| Direkt 1 | 17,00 ms | 34,01 ms | 1 / 1266 |
+| Direkt 2 | 16,98 ms | 30,13 ms | 0 / 1271 |
+| Sparsam danach | 17,44 ms | 58,34 ms | 52 / 1273 |
+
+Alle Phasen: 1920×1080, kein Dokument-Scroll, keine JavaScript-Fehler. Gemessen
+wurden Browser-Zeichenintervalle mit synthetischen DOM-Tasten; keine Behauptung
+über direkt gemessene Panel-FPS. Mehrere alternative Grafikebenen, Canvas-Menü,
+Schattenreduktion und kürzere Übergänge waren nicht verlässlich schneller und
+wurden verworfen. Die temporären Probe-Dateien wurden entfernt und Original-
+Dateien vor Installation des fertigen Pakets per Prüfsumme wiederhergestellt.
+
+Separat wurde ein echter Fehler der TV-Dialoge reproduziert: `showModal()` auf
+dem bereits offenen Dialog warf `InvalidStateError`. Dadurch enthielt das
+Leistungs-Untermenü null Aktionsknöpfe. Nach der Korrektur: vier Aktionsknöpfe,
+308 px Aktionsbereich, keine JavaScript-Fehler. Dieselbe Korrektur gilt für
+Audio-/Netzwerk-/Datenschutz-, Webserver- und Update-Untermenüs. Die Browser-
+Regressionen simulieren nun ausdrücklich das strengere Tizen-Verhalten.
+
+Der native Prozessspeicher stieg in den Vergleichsläufen weiterhin an und ging
+zwischendurch zurück. Daraus folgt weder ein unbeschränktes Leck noch dessen
+Behebung. Keine neuen Firmware-, Boot- oder USB-Hardwareversuche in dieser Runde.
+
+
+Abschließender Test der unveränderten Installation im aktivierten Direktmodus:
+1.544 echte Compositor-Richtungstasten in 24 Serien und danach 120 Sekunden Ruhe,
+insgesamt 5,59 Minuten. Derselbe Launcher-Prozess blieb bestehen. Der Wächter
+meldete keinen zusätzlichen Prozesswechsel; sein vorheriger Zählerstand 1
+stammte vom absichtlichen Neustarttest. PSS stieg von 71,71 auf 80,55 MiB, zugleich
+Spitze und Endwert. Keine Behauptung eines behobenen langfristigen Speicherlecks.
+
+Beim vorangegangenen manuellen SDK-Beenden/Neustart trat eine leere `file:///`-
+Oberfläche auf. Dieser erste Lauf wurde abgebrochen und nicht als bestandener
+Belastungstest gewertet. Nach vollständigem App-Neustart und regulärem Home-Aufruf
+war die Oberfläche wieder sichtbar; der gespeicherte Direktmodus wurde im Menü
+bestätigt. Der finale Test begann ausdrücklich erst mit sichtbarem Launcher.
+Ein Geräte-Kaltstart wurde in dieser Runde nicht geprüft.
+
+
+Letzte Sichtprüfung der finalen Installation: Audio-Untermenü und Webserver-
+Konfiguration zeigen ihre Bedienknöpfe samt Fokus. Browser-Start und Home-Rückkehr
+wechseln nachweislich zwischen `org.tizen.browser` und `Tizen Deck XMB`.
+Der Launcher bleibt im selben Prozess, und die installierten Quellen stimmen
+weiterhin per SHA-256. Keine temporären Diagnose-Skripte mehr im App-Paket.
