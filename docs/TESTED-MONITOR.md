@@ -124,3 +124,28 @@ Launcher-Prozess blieb aktiv, der Wächter erkannte keinen Absturz. PSS stieg vo
 92,8 MiB. Die abschließende Bildschirmaufnahme zeigte das normale Menü. Der
 verbleibende Speicheranstieg ist weiterhin offen; ein vollständig behobener
 RAM-Fehler ist damit nicht nachgewiesen.
+
+## Lokal vorbereitet: Launcher 1.9.0 (26.10.2026)
+
+Der Monitor wurde über den vorhandenen Adminzugang ausgeschaltet. Die Display-API
+bestätigte Bildschirmstatus 0; später war der native HTTPS-Dienst im Standby nicht
+mehr erreichbar. Für die folgenden Arbeiten wurde kein Weckpaket gesendet.
+Installiert bleiben Launcher **1.8.5**, Rückfall **1.8.3** und TV-Dienst **1.8.2**.
+
+Ein passendes 1.9.0-Paket ist lokal signiert und seine Update-Signatur geprüft.
+Es wurde weder auf dem Monitor bereitgestellt noch installiert.
+
+- Lokaler Fehlernachweis: unsichtbare Kategorien und lange Eintragslisten konnten
+  das Dokument über den Bildschirm hinaus vergrößern. Fokus auf die letzte
+  Kategorie verschob im Browser die gesamte Seite um 211 Pixel. Feste
+  Bildschirmgrenzen und nicht fokussierbare unsichtbare Kategorien verhindern
+  dies im Regressionstest, einschließlich 192 schneller Eingaben.
+- Audio-/Uhr-Refactor, Freigabe beendeter Audiostimmen, Schließen des Audiokontexts
+  bei Ruhe und begrenzte native Statusanfragen sind automatisiert geprüft.
+- Extras → Uhr & Timer ergänzt eine dunkle Uhr, Stoppuhr und Countdown. Kein
+  Wecken aus Standby; Countdown-Signal nur während Deck läuft bzw. bei Rückkehr.
+- Neun Unit- und neun Browser-Tests bestanden. Keine neue TV-FPS- oder RAM-Messung.
+
+Der vom Nutzer gemeldete Bildfehler und der verbleibende Speicheranstieg sind erst
+nach Installation und erneuter Prüfung auf der Tizen-Webengine abschließend
+bewertbar. Keine Firmware- oder Boot-Änderung in diesem Arbeitsschritt.
