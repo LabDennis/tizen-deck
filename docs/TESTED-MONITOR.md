@@ -105,3 +105,22 @@ wieder erreichbar. Details und Grenzen: [PC-REMOTE.md](PC-REMOTE.md).
   eingerichtet. Weitere Details und Grenzen: [BACKEND-UPDATES.md](BACKEND-UPDATES.md).
 - Die neue Boot-/Root-Forschung bleibt pausiert. Kein neues Boot-Verfahren
   eingerichtet und keine Firmware geflasht.
+
+
+## Launcher-Leistung 1.8.5
+
+Am 26.10.2026 installiert und mit dem Quellstand per SHA-256 abgeglichen.
+Bei 600 horizontalen bzw. 280 vertikalen synthetischen Eingaben im sparsamen
+Profil mit Menütönen sank das mittlere requestAnimationFrame-Intervall gegenüber
+1.8.3 von 47,48 auf 40,09 ms bzw. von 23,28 auf 17,47 ms. Im Leerlauf rund 16,8 ms.
+Browser-Zeichenintervalle sind kein direkter Panel-FPS-Nachweis. Temporärer
+Messcode wurde danach entfernt. Die bisherigen Scrollanimationen bleiben erhalten.
+Der signierte Launcher-Rückfall ist 1.8.3; der native Dienst bleibt 1.8.2.
+
+Uninstrumentierter Gerätetest danach: 4.000 echte Richtungseingaben in 20 Serien,
+anschließend zwei Minuten Ruhe (insgesamt ca. 10,7 Minuten). Derselbe
+Launcher-Prozess blieb aktiv, der Wächter erkannte keinen Absturz. PSS stieg von
+67,4 MiB auf maximal 105,6 MiB, fiel zwischendurch auf 84,2 MiB und lag am Ende bei
+92,8 MiB. Die abschließende Bildschirmaufnahme zeigte das normale Menü. Der
+verbleibende Speicheranstieg ist weiterhin offen; ein vollständig behobener
+RAM-Fehler ist damit nicht nachgewiesen.
