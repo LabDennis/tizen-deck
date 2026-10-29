@@ -1,5 +1,12 @@
 # Tizen Deck
 
+## Screenshot
+
+Anmeldeseite der Version 1.0 in einer lokalen Browser-Vorschau ohne Verbindung
+zum TV und ohne Zugangsdaten. [Launcher-Screenshots](https://github.com/LabDennis/tizen-deck-xmb#screenshots).
+
+![Passwortgeschützte Anmeldung zur Monitorverwaltung](docs/screenshots/login.png)
+
 ## Öffentliche Version 1.0
 
 Der projektspezifische Code wurde zum Großteil mit KI (OpenAI Codex) erstellt und
