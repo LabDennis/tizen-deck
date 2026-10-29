@@ -26,3 +26,12 @@ tests/native-guard/obj/
 
 tests/native-backend/bin/
 tests/native-backend/obj/
+
+# Local credentials, captures and device backups
+.env.*
+!.env.example
+*.pfx
+*.log
+*.tar.gz
+backups/
+dumps/

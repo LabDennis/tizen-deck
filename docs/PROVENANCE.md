@@ -1,5 +1,8 @@
 # Entstehung und Quellen
 
+Der projektspezifische Code ist zum Großteil KI-generiert (OpenAI Codex).
+Die öffentliche Version 1.0 setzt die bisherige private Versionszählung zurück.
+
 Tizen Deck und Tizen Deck XMB wurden im Oktober 2026 von **LabDennis gemeinsam
 mit OpenAI Codex** entwickelt. Codex hat auf Anweisung des Eigentümers den
 projektspezifischen Code, Installer, Tests und Dokumentation in dieser Sitzung

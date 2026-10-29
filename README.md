@@ -1,5 +1,22 @@
 # Tizen Deck
 
+## Öffentliche Version 1.0
+
+Der projektspezifische Code wurde zum Großteil mit KI (OpenAI Codex) erstellt und
+überarbeitet. LabDennis hat Anforderungen, Gestaltung und Entscheidungen vorgegeben
+und Funktionen am eigenen Samsung M7 geprüft. KI-generiert bedeutet nicht fehlerfrei
+oder umfassend geprüft; die dokumentierten Tests und Grenzen gelten weiterhin.
+Drittprojekte, Samsung-APIs und der verwendete Root-Exploit bleiben Arbeiten ihrer
+jeweiligen Urheber.
+
+Die öffentliche Versionszählung beginnt bei **1.0** (Paketversion **1.0.0**).
+Ältere private Entwicklungsstände trugen höhere Nummern (Launcher 1.11.3,
+TV-Dienst 1.9.1). Die folgenden historischen Testberichte behalten diese Nummern.
+Der normale Updater verweigert deshalb den Wechsel von diesen Entwicklungsständen
+auf 1.0.0. Dafür ist eine bewusst geplante manuelle Installation mit vorheriger
+Sicherung erforderlich; die Downgrade-Prüfung bleibt erhalten. Dieser Release
+ändert keine bestehende Installation auf dem TV.
+
 Lokale, passwortgeschützte Webverwaltung für Samsung-Tizen-Monitore: Status, Prozesse, Dienste, Pakete, Netzwerk, Fernbedienung und Konsole. Die externe Bridge verwendet ausdrücklich gewählte temporäre Root-Sitzungen; optional kann ein eigener Dienst direkt auf dem Monitor laufen.
 
 Ab TV-Dienst 1.9.1: [private signierte Updates vom PC](docs/LAN-UPDATES.md)
@@ -86,3 +103,7 @@ cleanup guarantees do not apply to that separate running service.
 Entwickelt von LabDennis mit OpenAI Codex am eigenen Samsung M7. Der zugrunde
 liegende Root-Exploit stammt aus samsung-tv-root; ein Firmware-Rebuild oder
 Bootloader-Unlock wird nicht als fertige Funktion angeboten.
+
+## Debloat-Skripte
+
+[Verwendete Cleanup-Befehle, Sicherung und Grenzen](docs/DEBLOAT.md).
